@@ -1,0 +1,21 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "games.csv",
+  "type": "object",
+  "properties": {
+    "game_id": { "type": "string", "pattern": "^[a-z0-9][a-z0-9_-]*$" },
+    "season": { "type": "string", "minLength": 1 },
+    "date": { "type": ["string", "null"], "pattern": "^\\d{4}-\\d{2}-\\d{2}$" },
+    "label": { "type": ["string", "null"], "description": "short human label, e.g. round of 8" },
+    "home_team_id": { "type": "string", "minLength": 1 },
+    "away_team_id": { "type": "string", "minLength": 1 },
+    "home_final": { "type": ["integer", "null"], "minimum": 0, "description": "final score entered by hand; used to check the charting" },
+    "away_final": { "type": ["integer", "null"], "minimum": 0 },
+    "vod_url": { "type": ["string", "null"] },
+    "charted_by": { "type": ["string", "null"] },
+    "chart_status": { "enum": ["partial", "complete"] },
+    "velo_unit": { "enum": ["km/h", "mph"] },
+    "game_version": { "type": ["string", "null"] }
+  },
+  "required": ["game_id", "season", "home_team_id", "away_team_id", "chart_status", "velo_unit"]
+}

@@ -5,8 +5,9 @@ Baseball Savant-style scouting site for a VR baseball competition. Static site o
 ## Local development
 
 ```sh
+git clone https://github.com/wbd-savant/vr-baseball-data.git data/raw   # private data, see Repos below
 python -m pip install -r pipeline/requirements.txt
-python pipeline/export_json.py      # or: make data
+python pipeline/export_json.py      # or: make data (validates data/raw first)
 cd site && npm install && npm run dev
 ```
 
@@ -18,7 +19,7 @@ SITE_PASSWORD="some long passphrase" python pipeline/encrypt.py
 cd site && npm run build && npm run preview
 ```
 
-Run `python pipeline/export_json.py` again afterwards to get plain data back for `npm run dev` (delete `site/public/data/` first to drop the `.enc` files).
+Run `python pipeline/export_json.py` again afterwards to get plain data back for `npm run dev`.
 
 ## Repos
 

@@ -6,6 +6,8 @@ Static scouting site for a VR baseball competition. See docs/handoff.md for the 
 
 ### Commands
 - `make data`: validate raw CSVs and build JSON into site/public/data (Windows without make: `python pipeline/export_json.py`)
+- `make validate`: check data/raw only (Windows: `python pipeline/validate.py`)
+- `make import-legacy`: re-convert data/raw/legacy into games/pitches (Windows: `python pipeline/import_legacy.py`)
 - `make test`: pipeline unit tests (Windows: `python -m unittest discover pipeline/tests`)
 - `cd site && npm run dev`: local dev server
 - `cd site && npm run build`: production build

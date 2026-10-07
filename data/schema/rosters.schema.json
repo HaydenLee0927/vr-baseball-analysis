@@ -1,0 +1,12 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "rosters.csv",
+  "description": "Which team each player played for in each season (competition). A player can be on different teams in different seasons.",
+  "type": "object",
+  "properties": {
+    "season": { "type": "string", "minLength": 1 },
+    "team_id": { "type": "string", "minLength": 1 },
+    "player_id": { "type": "string", "minLength": 1 }
+  },
+  "required": ["season", "team_id", "player_id"]
+}

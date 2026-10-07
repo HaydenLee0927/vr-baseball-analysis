@@ -19,6 +19,5 @@ export const ko = {
     title: '스카우팅 홈',
     placeholder: '준비 중입니다. 선수 검색과 리더보드가 곧 추가됩니다.',
     builtAt: '데이터 갱신',
-    fixtureNotice: '테스트용 데이터입니다.',
   },
 } as const;

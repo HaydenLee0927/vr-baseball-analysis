@@ -17,7 +17,14 @@ Changes from the plan below, decided during M0:
 - `npm run dev` reads plain JSON; the password gate is tried locally with `npm run build && npm run preview` (see README).
 - No `make` on the owner's Windows machine; CLAUDE.md lists the plain `python` command for each `make` target.
 
-**Next: M1.** Needs the six legacy CSVs added to `vr-baseball-data` under `legacy/`, and answers to open questions 1 and 2 in section 2.
+**M1: done (2026-10-07).** `make data` validates `data/raw/` and writes every JSON file in section 6 from the imported legacy games (4 games, 368 pitches, 154 PAs, 43 players). `make test` runs 18 tests, including every stat formula against a hand-computed one-inning fixture game (`pipeline/tests/fixture.py`). What was built and how it differs from the plan:
+- Schemas: `data/schema/*.schema.json` + `pitch_types.csv` (public repo). Checked by a small built-in validator (`pipeline/rawdata.py`) instead of the `jsonschema` package, to keep dependencies to pandas/numpy/scipy/cryptography.
+- Player identity, rosters and the extra `games.csv` columns: section 4.
+- `import_legacy.py` built, since the legacy games are the site demo: section 4a, "As built".
+- Stats choices: **ERA is reported as RA9** (all runs allowed per 9 innings), because earned and unearned runs are not charted; runs are credited to the pitcher on the mound when they score. Foul tips count as whiffs (Baseball Savant's convention). Outs and runs on each row come from the state on the next row.
+- Not built in M1: the **synthetic seed generator** (section 8). The hand-written fixture covers walks and home runs for the formula tests; the generator is deferred to M4, where point-mode spray charts first need `field_x/field_y` data. Percentiles and priors in `league.json` come with M4/M5.
+
+**Next: M2** (charting tool).
 
 ---
 
@@ -39,17 +46,21 @@ Changes from the plan below, decided during M0:
 - **Pitch location:** available. Use Savant zone integers: 1-9 in the strike zone, 11-14 for the four out-of-zone regions.
 - **Pitch type:** shown on stream for some pitches, hand-labeled or blank for others. Record it when known, with a `pitch_type_source` column (`stream` / `charter`). All pitch-type views must tolerate blanks and fall back to velocity bands.
 - **Access:** password-gated site (one shared password the coach can pass on), with a config switch to go fully public later. See section 3a.
-- **Historical data:** the owner will **re-chart the earlier games in the new tool**, following `docs/charting-guide.md`. The six existing CSVs (section 4a) show how the owner records and are useful as test fixtures; `import_legacy.py` is optional, build it only if asked. Open questions 3 to 5 below no longer block anything.
+- **Historical data:** the owner will **re-chart the earlier games in the new tool**, following `docs/charting-guide.md`. Until then the six existing CSVs (section 4a) are imported with `import_legacy.py` as the site's demo data.
 - **Charting guide:** `docs/charting-guide.md` is the contract for the charting tool: every field, value list, event type and export check in it must exist in the tool.
 
 - **Language:** scouting site is **Korean**; charting tool is English. See section 7a.
 
-**Still open (answer before M1)**
-1. **Game rules**: innings per game, players on the field, DH, any rules that differ from real baseball.
-2. **Field dimensions** of the VR world: fence distances, any odd shape. A top-down screenshot is ideal.
-3. **Which games showed pitch type on stream** (see section 4a, "pitch type"). Until answered, the converter treats `FF` in the flagged games as unknown.
-4. **What `좌투` / `우투` in the notes refers to**: the pitcher switching throwing hands between batters, or something else?
-5. **Confirm the game pairings and fix the flagged rows** in section 4a.
+**Answered by the owner (2026-10-07)**
+1. **Game rules:** innings per game vary from game to game. Nine players on the field as in real baseball; past games appear to have had no DH. Official rules for the new competition are not out yet, so **assume nothing**: innings come from the data, and nothing may assume a fixed game length. Per-9-inning rates (RA9, HR/9) are still fine as rates, since they do not depend on how long a game is.
+2. **Field dimensions:** not known. Top-down screenshot: [`docs/field-topdown.png`](field-topdown.png). The outfield wall is irregular: a short, angled left-field corner, a deep right-center, and a notch in the right-field corner. Distances can only be estimated relative to the 90-foot-equivalent base paths, and the screenshot has some perspective, so treat any distance as approximate. The spray chart (M4) traces this outline.
+3. **Pitch type in legacy games:** unknown. The legacy data is a **demo only** (it will be re-charted), so the default rules in section 4a stand.
+4. **`좌투` / `우투`:** `__Daki__` pitched with both hands, switching between batters. The per-pitch `pitcher_hand` column handles this; the importer carries each note forward as described in section 4a.
+5. **Flagged rows and name variants:** fix as needed; the only requirement is that the demo data does not break anything. Fixes are applied by the importer, not by editing the original files.
+
+**Consequence:** because the legacy data is the site demo, `import_legacy.py` **is needed** (M1), turning the six files into normal `games.csv` + `pitches/*.csv`.
+
+**New requirement: VRChat username vs. display name.** Raw data records each player's VRChat username, but the site should show a different display name. See the player identity section in section 4.
 
 ## 3. Architecture
 
@@ -125,16 +136,34 @@ Because the charting tool is never published, there is nothing for a password ho
 
 The grain is **one row per pitch**. Everything else is derived. Do not store derived stats in `raw/`.
 
-### players.csv
-`player_id, display_name, slug, team_id, first_season, default_bats (L/R/S, optional), default_throws (L/R, optional)`
+The exact columns, types and allowed values of every table are defined in `data/schema/*.schema.json` (JSON Schema; column order = order of `properties`). Those files are authoritative; the lists below summarize them. Changing them needs the owner's approval.
 
-- `display_name` is the in-game nickname exactly as shown (mixed Hangul, Latin, underscores, spaces: `__Daki__`, `카나시 Kanashi`, `망 야 _`). Never trim or normalize it for display.
-- `slug` is generated ASCII (`p-daki`, or a short hash when nothing romanizes), used in URLs and file names.
-- Handedness is recorded **per pitch** (section 4), because players in this game switch sides. `default_*` is only a fallback.
-- `data/raw/player_aliases.csv` (`alias, player_id`) maps spelling variants to one player. The validator fails on any name that is neither a `display_name` nor an alias.
+### Player identity (decided 2026-10-07)
+Raw data and the charting tool know players by **VRChat username**; the site shows a separate **display name**. A permanent `player_id` connects them, so a username change never touches old data.
+
+### players.csv
+`player_id, display_name, vrchat_name, slug, default_bats (L/R/S), default_throws (L/R/S)`
+
+- `player_id` is permanent. It is generated once from the VRChat name (romanized, e.g. `daki`, `dambineunheungheung`) and never changes afterwards, even if the name does.
+- `vrchat_name` is the current VRChat username exactly as shown in game (mixed Hangul, Latin, underscores, spaces: `__Daki__`, `카나시 Kanashi`, `망 야 _`). Never trim or normalize it.
+- `display_name` is what the site shows. Filled in by the owner; when blank the site falls back to `vrchat_name`.
+- `slug` is ASCII, used in URLs and file names. Starts equal to `player_id`; may be changed later (e.g. to match a display name).
+- Handedness is recorded **per pitch**, because players in this game switch sides (`__Daki__` pitches with both hands). `default_*` is only a fallback.
+
+### player_aliases.csv
+`alias, player_id`: old VRChat usernames and misspellings. The charting tool and importer resolve a name through `vrchat_name` first, then aliases. Pitch CSVs store `player_id` only.
+
+### teams.csv
+`team_id, display_name`
+
+### rosters.csv
+`season, team_id, player_id`: who played for which team in each competition. A player can be on different teams in different seasons. A player on two teams in one season is a validator warning.
 
 ### games.csv
-`game_id, season, date, home_team_id, away_team_id, vod_url, charted_by, chart_status (partial/complete)`
+`game_id, season, date, label, home_team_id, away_team_id, home_final, away_final, vod_url, charted_by, chart_status (partial/complete), velo_unit (km/h/mph), game_version`
+
+- `date` may be blank when unknown (legacy games have no year); `label` is a short human name (`03-14`, `8강`).
+- `home_final`/`away_final` are entered by hand and used only to check the charting (section 8). On the last row of a game there is no next row to read the score from, so runs on the final play come from `home_final`/`away_final`, else from that row's `rbi`.
 
 ### pitches/{game_id}.csv
 
@@ -166,7 +195,7 @@ The grain is **one row per pitch**. Everything else is derived. Do not store der
 **On coordinates:** store `field_x, field_y` normalized to the diagram (home plate at a fixed origin), and derive spray angle and approximate distance in the pipeline. Also derive a coarse zone (pull/center/oppo x infield/shallow/deep) and display at that resolution by default, since hand-charted points are approximate. `fielder_pos` is the fallback when the landing spot was not visible.
 
 ### legacy/*.csv
-The owner's original files, committed unchanged (section 4a). Never edit them by script; corrections go in by hand so the originals stay the record of what was charted.
+The owner's original files, committed unchanged (section 4a). Never edit them; corrections go in `legacy/fixes.csv` so the originals stay the record of what was charted.
 
 ## 4a. Existing data: format and import rules
 
@@ -185,7 +214,14 @@ Six CSVs, all with the same 21 columns, one row per pitch:
 | `wbd_savant_0318_50_texas.csv` | 50 | both halves, 3 inn | vs chun_yankees, 03-18 |
 | `wbd_savant_0319_50_texas.csv` | 95 | both halves, 5 inn | vs chun_yankees, 03-19 |
 
-Year, competition name, and `season` ID are not in the files; put them in `games.csv` by hand. A small `data/raw/legacy/manifest.csv` (`file, game_id`) tells the converter which files merge into one game. The `.xlsx` copies duplicate the CSVs and are not imported.
+Year, competition name, and `season` ID are not in the files; put them in `games.csv` by hand. The `.xlsx` copies duplicate the CSVs and are not imported.
+
+**As built (M1):** `pipeline/import_legacy.py` reads three hand-written files next to the originals in `data/raw/legacy/`:
+- `manifest.csv` (`file, game_id, fielding, home_pitchers, pitch_type_visible_from_line`). `fielding` says whose pitchers are in the file: `home` (file holds the top halves), `away` (bottom halves) or `both`; for `both`, `home_pitchers` lists the home team's pitchers (`;`-separated) and decides each row's half. Line numbers count the header as line 1.
+- `fixes.csv` (`file, line, column, value, reason`): corrections applied before converting.
+- `name_variants.csv` (`variant, name`): misspellings, written to `player_aliases.csv`. Chosen spellings: `유샥크_` (most frequent; `유샤크_` and `유샼크_` are aliases) and `로에__` (`로에_` is an alias).
+
+Legacy games are `legacy-0314`, `legacy-0318`, `legacy-0319`, `legacy-ro8` in season `wbd-legacy`. The importer writes their `pitches/*.csv` and adds missing players, aliases, teams and roster rows (team membership comes from which half a player batted or fielded in), keeping anything already there. Re-running it is safe.
 
 **Column mapping**
 
@@ -201,13 +237,13 @@ Year, competition name, and `season` ID are not in the files; put them in `games
 | `inplay_result` | `pa_result` + `bb_type` | `strike_out`→`K`; `hit`→`1B`; `double`→`2B`; `triple`→`3B`; `ground_out`→`out` + `ground`; `fly_out`→`out` + `fly`; `fly_double_play`→`DP` + `fly`; `fielders_choice`→`FC`; `error`→`E`. Row with `result = hit_by_pitch`→`HBP`. `bb_type` stays blank for hits, errors and FC (not charted). |
 | `batted_ball_location` | `fielder_pos` | 1-9. `field_x/field_y` stay blank. |
 | `notes` | `notes` + parsed fields | `좌투`/`우투` → `pitcher_hand` L/R, `좌타`/`우타` → `batter_side` L/R, each carried forward until the next note for that same player (pending open question 4). `steal`, `라이너` (liner), error descriptions stay as text. |
-| (missing) `half` | derived | from which team the pitcher belongs to (`players.csv`): home team pitching = `top`. |
-| (missing) `pa_id`, `pitch_id` | derived | new PA when the batter changes or the count resets to 0-0 |
+| (missing) `half` | derived | from `manifest.csv` (`fielding`, `home_pitchers`): home team pitching = `top`. Rows of a two-file game are interleaved by inning and half. |
+| (missing) `pa_id`, `pitch_id` | derived | new PA when the batter changes, the half-inning changes, the previous pitch ended a PA, or the count resets to 0-0 |
 
 No walks and no home runs occur in these 368 pitches, so the old format has no value for them. New charting uses `BB` and `HR` from section 4.
 
 **Pitch type: `FF` is often a placeholder, not an observation.** 328 of 368 pitches are `FF`. In at least some games the stream did not show pitch type and `FF` was entered by default; the notes carry guesses (`sinker?` 19 times, `slider?`, `splitter?`) and `daki2` has the note "pitch type visible from here" at its 13th pitch. Rules:
-- `manifest.csv` gets a `pitch_type_visible_from_row` per file (blank = never visible).
+- `manifest.csv` gets a `pitch_type_visible_from_line` per file (blank = never visible; `daki2` = line 14, the 13th pitch).
 - Rows before that: `pitch_type` blank, and a `?` guess from the notes goes to `pitch_type` with `pitch_type_source = charter`.
 - Rows after: keep the value, `pitch_type_source = stream`.
 - Default until the owner answers: `daki`, `roundof8_batting` = never visible; `daki2` = from row 13; `0314_batting`, `0318`, `0319` = visible (they contain non-FF types).

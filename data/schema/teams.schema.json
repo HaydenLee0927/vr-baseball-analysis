@@ -1,0 +1,10 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "teams.csv",
+  "type": "object",
+  "properties": {
+    "team_id": { "type": "string", "pattern": "^[a-z0-9][a-z0-9_-]*$" },
+    "display_name": { "type": ["string", "null"] }
+  },
+  "required": ["team_id"]
+}

@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { ko } from '../i18n/ko';
 import { loadData } from '../lib/loadData';
 
-type Meta = { built_at: string; fixture: boolean };
+type Meta = { built_at: string };
 
 export function Home() {
   const [meta, setMeta] = useState<Meta | null>(null);
@@ -20,7 +20,6 @@ export function Home() {
       {meta && (
         <p className="muted">
           {ko.home.builtAt}: {new Date(meta.built_at).toLocaleString('ko-KR')}
-          {meta.fixture && ` · ${ko.home.fixtureNotice}`}
         </p>
       )}
     </main>

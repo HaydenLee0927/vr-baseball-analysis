@@ -8,7 +8,11 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 import encrypt  # noqa: E402
-from export_json import fixture_files, write_json  # noqa: E402
+from export_json import write_json  # noqa: E402
+
+
+def fixture_files():
+    return {"meta.json": {"built_at": "2026-01-01T00:00:00+00:00"}, "player/a.json": {"name": "담비"}}
 
 
 class EncryptDirTest(unittest.TestCase):

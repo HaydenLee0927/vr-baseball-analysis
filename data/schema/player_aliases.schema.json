@@ -1,0 +1,11 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "player_aliases.csv",
+  "description": "Other names that mean the same player: old VRChat usernames and spelling variants.",
+  "type": "object",
+  "properties": {
+    "alias": { "type": "string", "minLength": 1 },
+    "player_id": { "type": "string", "minLength": 1 }
+  },
+  "required": ["alias", "player_id"]
+}
