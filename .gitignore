@@ -1,0 +1,11 @@
+node_modules/
+site/dist/
+site/public/data/
+__pycache__/
+*.pyc
+.env
+.env.local
+*.tsbuildinfo
+
+# Private data repo (vr-baseball-data) is cloned here; never commit it to the public repo
+data/raw/

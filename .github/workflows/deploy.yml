@@ -1,0 +1,82 @@
+name: Deploy
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+env:
+  # Set to 'true' to publish plain JSON with no password prompt.
+  PUBLIC_MODE: 'false'
+  DATA_REPO: HaydenLee0927/vr-baseball-data
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      # Raw data lives in a private repo; only its encrypted build output is deployed.
+      - uses: actions/checkout@v5
+        with:
+          repository: ${{ env.DATA_REPO }}
+          ssh-key: ${{ secrets.DATA_DEPLOY_KEY }}
+          path: data/raw
+
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+          cache: pip
+          cache-dependency-path: pipeline/requirements.txt
+      - run: pip install -r pipeline/requirements.txt
+      - run: make test
+      - run: make data
+
+      - name: Encrypt data
+        if: env.PUBLIC_MODE != 'true'
+        env:
+          SITE_PASSWORD: ${{ secrets.SITE_PASSWORD }}
+        run: make encrypt
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: '24'
+          cache: npm
+          cache-dependency-path: site/package-lock.json
+      - run: npm ci
+        working-directory: site
+      - run: npm run build
+        working-directory: site
+        env:
+          BASE_PATH: /${{ github.event.repository.name }}/
+          VITE_PUBLIC_MODE: ${{ env.PUBLIC_MODE }}
+
+      - name: Fail if plaintext data would be deployed
+        if: env.PUBLIC_MODE != 'true'
+        run: |
+          leaked=$(find site/dist/data -name '*.json' ! -name crypto.json)
+          if [ -n "$leaked" ]; then echo "Plaintext JSON in build: $leaked"; exit 1; fi
+
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v4
+        with:
+          path: site/dist
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4
