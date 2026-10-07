@@ -4,6 +4,21 @@ A Baseball Savant-style scouting site for a VR baseball competition (played in t
 
 > **For Claude Code:** build in the milestone order in section 9. Each milestone is independently shippable. Ask the owner before changing the data schema (section 4); everything else is your call.
 
+## Progress
+
+**M0: done (2026-10-07).** Live at https://wbd-savant.github.io/vr-baseball-analysis/ behind the password gate.
+
+Changes from the plan below, decided during M0:
+- **Two repos instead of one private repo** (section 3a). GitHub Pro was not available, so the code repo is public and the data is private:
+  - `wbd-savant/vr-baseball-analysis` (public): code, pipeline, schemas, docs. Pages is served from here.
+  - `wbd-savant/vr-baseball-data` (private): everything under `data/raw/`. CI checks it out with a read-only deploy key (`DATA_DEPLOY_KEY` secret); locally it is cloned into `data/raw/`, which the public repo ignores.
+  - CI logs are public, so the pipeline never prints raw data or coach notes.
+- **Repos are owned by the `wbd-savant` organization**, so the site address does not show the owner's personal account.
+- `npm run dev` reads plain JSON; the password gate is tried locally with `npm run build && npm run preview` (see README).
+- No `make` on the owner's Windows machine; CLAUDE.md lists the plain `python` command for each `make` target.
+
+**Next: M1.** Needs the six legacy CSVs added to `vr-baseball-data` under `legacy/`, and answers to open questions 1 and 2 in section 2.
+
 ---
 
 ## 1. Constraints that shape the design
