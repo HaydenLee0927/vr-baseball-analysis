@@ -13,7 +13,7 @@ Changes from the plan below, decided during M0:
   - `wbd-savant/vr-baseball-analysis` (public): code, pipeline, schemas, docs. Pages is served from here.
   - `wbd-savant/vr-baseball-data` (private): everything under `data/raw/`. CI checks it out with a read-only deploy key (`DATA_DEPLOY_KEY` secret); locally it is cloned into `data/raw/`, which the public repo ignores.
   - CI logs are public, so the pipeline never prints raw data or coach notes.
-- **Repos are owned by the `wbd-savant` organization**, so the site address does not show the owner's personal account.
+- **Repos are owned by the `wbd-savant` organization**, so the site address does not show the owner's personal account. The org setting that allows deploy keys must stay on, or CI cannot fetch the data repo.
 - `npm run dev` reads plain JSON; the password gate is tried locally with `npm run build && npm run preview` (see README).
 - No `make` on the owner's Windows machine; CLAUDE.md lists the plain `python` command for each `make` target.
 
