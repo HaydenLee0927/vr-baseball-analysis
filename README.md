@@ -30,7 +30,7 @@ Run `python pipeline/export_json.py` again afterwards to get plain data back for
 Locally, clone the data repo into `data/raw/` (gitignored here):
 
 ```sh
-git clone https://github.com/HaydenLee0927/vr-baseball-data.git data/raw
+git clone https://github.com/wbd-savant/vr-baseball-data.git data/raw
 ```
 
 ## Deploying

@@ -17,7 +17,7 @@ concurrency:
 env:
   # Set to 'true' to publish plain JSON with no password prompt.
   PUBLIC_MODE: 'false'
-  DATA_REPO: HaydenLee0927/vr-baseball-data
+  DATA_REPO: wbd-savant/vr-baseball-data
 
 jobs:
   build:

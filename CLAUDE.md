@@ -12,7 +12,7 @@ Static scouting site for a VR baseball competition. See docs/handoff.md for the 
 
 ### Rules
 - data/raw/ is the source of truth. Never write derived stats there.
-- This repo is public. data/raw/ is a clone of the private repo HaydenLee0927/vr-baseball-data and is gitignored here; never commit raw data, coach notes, or passwords to this repo.
+- This repo is public. data/raw/ is a clone of the private repo wbd-savant/vr-baseball-data and is gitignored here; never commit raw data, coach notes, or passwords to this repo.
 - CI logs are public: pipeline output may print file names, counts and error locations, but never coach notes or decrypted data.
 - Do not change column names in data/schema/ without asking; the charting tool and pipeline both depend on them.
 - Every rate stat shown in the UI must display its sample size.
