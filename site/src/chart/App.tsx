@@ -14,10 +14,17 @@ import {
   type Draft,
   type ServerData,
 } from './data';
-import { initialState } from './engine';
+import { FIELD_POSITIONS, fieldingSide, hand, initialState, type Lineup, type PitchRow } from './engine';
 import { Setup, type SetupResult } from './Setup';
 
 type Screen = 'home' | 'new' | 'chart' | 'setup';
+
+/** Fill a row's empty defense (fielders, and the catcher if blank) from a lineup. */
+function withDefense(row: PitchRow, lineup: Lineup): PitchRow {
+  const out = { ...row, catcher_id: row.catcher_id ?? lineup.catcher };
+  for (const p of FIELD_POSITIONS) out[`fielder_${p}`] = lineup.fielders[p] ?? null;
+  return out;
+}
 
 export function App() {
   const [data, setData] = useState<ServerData | null>(null);
@@ -60,7 +67,20 @@ export function App() {
         savedAt: null,
       });
     } else if (draft) {
-      change({ ...draft, ...r, updatedAt: new Date().toISOString() });
+      // Apply the edited defense to the game in progress (the state panel shows the state, not the lineup).
+      const fld = r.lineups[fieldingSide(draft.state.half)];
+      const state = { ...draft.state, fielders: { ...fld.fielders }, catcherId: fld.catcher ?? draft.state.catcherId };
+      if (fld.pitcher && fld.pitcher !== state.pitcherId) {
+        state.pitcherId = fld.pitcher;
+        state.pitcherHand = hand(fld.pitcher, 'throws', draft.memory, handDefaults(data.players));
+      }
+      // Rows recorded before positions were entered have no fielders; offer to fill those blanks.
+      const blank = draft.rows.filter((row) => FIELD_POSITIONS.every((p) => row[`fielder_${p}`] === null));
+      const rows =
+        blank.length && confirm(`Fill in the defense for the ${blank.length} earlier pitch(es) recorded without positions?`)
+          ? draft.rows.map((row) => (blank.includes(row) ? withDefense(row, r.lineups[fieldingSide(row.half)]) : row))
+          : draft.rows;
+      change({ ...draft, ...r, rows, state, updatedAt: new Date().toISOString() });
     }
     setScreen('chart');
   }
