@@ -54,11 +54,19 @@ jobs:
           cache-dependency-path: site/package-lock.json
       - run: npm ci
         working-directory: site
+      - run: npm test
+        working-directory: site
       - run: npm run build
         working-directory: site
         env:
           BASE_PATH: /${{ github.event.repository.name }}/
           VITE_PUBLIC_MODE: ${{ env.PUBLIC_MODE }}
+
+      - name: Fail if the charting tool is in the build
+        run: |
+          if grep -rl "VRS_CHARTING_TOOL" site/dist || find site/dist -iname '*chart*' | grep -q .; then
+            echo "Charting tool code found in site/dist; it must stay local-only"; exit 1
+          fi
 
       - name: Fail if plaintext data would be deployed
         if: env.PUBLIC_MODE != 'true'

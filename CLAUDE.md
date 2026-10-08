@@ -10,6 +10,8 @@ Static scouting site for a VR baseball competition. See docs/handoff.md for the 
 - `make import-legacy`: re-convert data/raw/legacy into games/pitches (Windows: `python pipeline/import_legacy.py`)
 - `make test`: pipeline unit tests (Windows: `python -m unittest discover pipeline/tests`)
 - `cd site && npm run dev`: local dev server
+- `cd site && npm run chart`: local charting tool (site/chart.html, src/chart/, chart-server.ts); never built for production
+- `cd site && npm test`: frontend unit tests (vitest; the charting engine)
 - `cd site && npm run build`: production build
 
 ### Rules

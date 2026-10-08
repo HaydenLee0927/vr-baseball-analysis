@@ -21,6 +21,20 @@ cd site && npm run build && npm run preview
 
 Run `python pipeline/export_json.py` again afterwards to get plain data back for `npm run dev`.
 
+## Charting a game
+
+```sh
+cd site && npm run chart     # opens http://localhost:5174/chart.html
+```
+
+Runs only on your computer; it is never deployed. It reads players and teams from `data/raw` and **Save to data/raw** writes the game there and runs the validator. Then commit and push the data repo. Follow [docs/charting-guide.md](docs/charting-guide.md).
+
+- Every change is autosaved in the browser; close the tab and pick the game up again from **Drafts on this computer**.
+- Games already in `data/raw` can be opened from the start screen to continue or correct them.
+- Keys: type the velocity, click the zone, then **B** ball, **C** called strike, **S** swinging strike, **F** foul, **T** foul tip, **X** in play, **H** hit by pitch; **Enter** records it, **Ctrl+Z** undoes, **V** re-stamps the video time, **Esc** clears the entry.
+- YouTube videos are embedded and their time is stamped automatically. CHZZK/SOOP cannot be embedded: open the video in another window, set the tool's clock to the video time and start it together with the video.
+- Click any row in the table to edit it. Edits change that row only; later rows keep their recorded state.
+
 ## Repos
 
 | Repo | Visibility | Contents |
