@@ -5,7 +5,7 @@ import { formatStat } from '../../lib/format';
 import { ChartCard, useDark, useTooltip } from './ChartCard';
 
 const U = 56; // px per grid unit
-const MIN_N = 3; // cells with a smaller sample are shown empty
+const MIN_N = 3; // rate metrics: cells with a smaller sample are shown empty
 const METRICS: ZoneMetric[] = ['share', 'swing', 'whiff', 'avg'];
 
 const fmt = (v: number | null, m: ZoneMetric) => (v === null ? '–' : m === 'avg' ? formatStat(v, 'avg') : `${Math.round(v * 100)}%`);
@@ -19,6 +19,8 @@ export function ZoneChart({ rows }: { rows: PitchRec[] }) {
   const cells = zoneShapes().map((s) => ({ ...s, ...zoneValue(zoned.filter((r) => r.zone === s.zone), zoned.length, metric) }));
   const maxShare = Math.max(0.0001, ...cells.map((c) => (metric === 'share' ? (c.value ?? 0) : 0)));
   const scale = (v: number) => (metric === 'share' ? v / maxShare : metric === 'avg' ? Math.min(1, v / 0.6) : v);
+  // Pitch share is a count out of every pitch shown, so any cell with a pitch is shown; rates need MIN_N.
+  const minN = metric === 'share' ? 1 : MIN_N;
 
   return (
     <ChartCard
@@ -45,7 +47,7 @@ export function ZoneChart({ rows }: { rows: PitchRec[] }) {
         <div className="viz zone" ref={tip.box}>
           <svg viewBox={`-2 -2 ${5 * U + 4} ${5 * U + 4}`} role="img" aria-label={`${ko.charts.zone} (${ko.charts.zoneMetrics[metric]})`}>
             {cells.map((c) => {
-              const ok = c.value !== null && c.n >= MIN_N;
+              const ok = c.value !== null && c.n >= minN;
               const color = ok ? seqColor(scale(c.value!), dark) : 'var(--viz-field)';
               const lines = [`${ko.charts.zoneLabel(c.zone)} · ${fmt(c.value, metric)}`, ko.charts.sampleN(c.n)];
               return (
@@ -62,6 +64,7 @@ export function ZoneChart({ rows }: { rows: PitchRec[] }) {
           {tip.element}
           <p className="muted small">
             {ko.charts.catcherView} · {ko.charts.pitchesShown(zoned.length)}
+            {metric !== 'share' && ` · ${ko.charts.zoneMinN(MIN_N)}`}
           </p>
         </div>
       )}

@@ -71,6 +71,7 @@ Changes from the plan below, decided during M0:
 
 - (2026-10-08) Leaderboard fix: when nobody in the season reaches the minimum sample (early in `wbd-2025`, one inning charted), the leaderboard shows every player with a note instead of an empty table, so players and their charts stay reachable.
 - (2026-10-08) Spray chart dots enlarged (radius 8, tap area 16) after a report that only one player had a spray chart. The data was fine: in the partial `wbd-2025` game, players with balls in play (불곰, 유시노 리냐, DAOMM, Gosummer12, Nyanya-, sirian_) have charts, but a single small dot was easy to miss on a phone. Players whose only PAs were strikeouts (jingburger, 사랑전도사 젠투, soosemi) correctly show "표시할 기록이 없습니다".
+- (2026-10-08) Zone chart fix: every cell needed 3 pitches, so with one inning charted nearly every player's grid was all "–" (only one player had any cell with 3). Pitch share now shows every cell with a pitch (the total is under the chart); swing%, whiff% and AVG still need 3 and say so under the chart. Test: `site/src/test/zone.test.tsx`.
 
 **Next: M5** (section 9): shrinkage and credible intervals, multi-season pooling, low-sample badges. The open items above (Korean review, display names) still apply.
 

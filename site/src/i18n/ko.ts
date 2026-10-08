@@ -170,6 +170,7 @@ export const ko = {
     metric: '보기 기준',
     zoneMetrics: { share: '투구 비율', swing: '스윙률', whiff: '헛스윙률', avg: '타율' } as Record<string, string>,
     zoneLabel: (z: number) => (z <= 9 ? `존 ${z}` : `존 밖 ${z}`),
+    zoneMinN: (n: number) => `표본 ${n}개 미만인 칸은 –`,
     sampleN: (n: number) => `표본 ${n}`,
     sample: '표본',
     veloTitle: '구속',
