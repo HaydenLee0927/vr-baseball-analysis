@@ -70,6 +70,7 @@ Changes from the plan below, decided during M0:
 - Not built: the first-visit walkthrough on the player page (section 7b), and the auto-generated scouting summary (M6).
 
 - (2026-10-08) Leaderboard fix: when nobody in the season reaches the minimum sample (early in `wbd-2025`, one inning charted), the leaderboard shows every player with a note instead of an empty table, so players and their charts stay reachable.
+- (2026-10-08) Spray chart dots enlarged (radius 8, tap area 16) after a report that only one player had a spray chart. The data was fine: in the partial `wbd-2025` game, players with balls in play (불곰, 유시노 리냐, DAOMM, Gosummer12, Nyanya-, sirian_) have charts, but a single small dot was easy to miss on a phone. Players whose only PAs were strikeouts (jingburger, 사랑전도사 젠투, soosemi) correctly show "표시할 기록이 없습니다".
 
 **Next: M5** (section 9): shrinkage and credible intervals, multi-season pooling, low-sample badges. The open items above (Korean review, display names) still apply.
 
