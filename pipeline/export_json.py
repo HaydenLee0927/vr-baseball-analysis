@@ -18,17 +18,26 @@ from build_stats import (
     batting_game_line,
     batting_line,
     final_score,
+    hands_used,
     pitch_frame,
     pitching_game_line,
     pitching_line,
+    splits,
 )
 from rawdata import RAW_DIR, ROOT, RawData, display_name, load_raw
 from romanize import romanize
 from validate import print_report, validate
 
 DEFAULT_OUT = ROOT / "site" / "public" / "data"
-BATTING_SUMMARY = ["pa", "avg", "obp", "slg", "ops", "hr", "k_pct", "bb_pct"]
-PITCHING_SUMMARY = ["g", "bf", "outs", "ip", "ra9", "whip", "k_pct", "bb_pct", "velo_avg", "velo_n"]
+# Fields copied into players.json for search and leaderboards (rates travel with their denominators).
+BATTING_SUMMARY = [
+    "pa", "ab", "h", "hr", "bb", "k", "avg", "obp", "slg", "ops", "k_pct", "bb_pct",
+    "swings", "whiff_pct", "chase_pitches", "chase_pct",
+]
+PITCHING_SUMMARY = [
+    "g", "bf", "outs", "ip", "r", "h", "bb", "k", "ra9", "whip", "k_pct", "bb_pct", "k_bb_pct",
+    "pitches", "swings", "whiff_pct", "csw_pct", "velo_avg", "velo_max", "velo_n",
+]
 PITCH_FIELDS = [
     "game_id", "inning", "half", "pa_id", "balls", "strikes", "outs", "pitcher_hand", "batter_side",
     "velo", "pitch_type", "pitch_type_source", "zone", "result", "bb_type", "fielder_pos",
@@ -62,13 +71,18 @@ def build_outputs(data: RawData) -> dict[str, object]:
         teams_of[(r["season"], r["player_id"])].append(r["team_id"])
     pas = df[df.pa_result.notna()] if not df.empty else df
     pitch_rows = df[df.result.notna()] if not df.empty else df
+    # Hands actually used in the charted games, falling back to the player's default.
+    bats_used = df.groupby("batter_id").b_side.agg(hands_used).to_dict() if not df.empty else {}
+    throws_used = df.groupby("pitcher_id").p_hand.agg(hands_used).to_dict() if not df.empty else {}
 
     def person(pid: str) -> dict:
         p = players[pid]
         name = display_name(p)
         return {
             "id": pid, "slug": p["slug"], "name": name, "vrchat_name": p["vrchat_name"],
-            "romanized": romanize(name), "bats": p.get("default_bats"), "throws": p.get("default_throws"),
+            "romanized": romanize(name),
+            "bats": bats_used.get(pid) or p.get("default_bats"),
+            "throws": throws_used.get(pid) or p.get("default_throws"),
         }
 
     def game_ref(game_id: str) -> dict:
@@ -84,11 +98,18 @@ def build_outputs(data: RawData) -> dict[str, object]:
     index_rows = []
     per_player: dict[str, list] = defaultdict(list)
     for season, pid in sorted(keys):
-        bat_pas = pas[(pas.season == season) & (pas.batter_id == pid)] if not df.empty else pas
+        at_bat = df[(df.season == season) & (df.batter_id == pid)] if not df.empty else df
         on_mound = df[(df.season == season) & (df.pitcher_id == pid)] if not df.empty else df
-        batting = batting_line(bat_pas, pitch_rows[(pitch_rows.season == season) & (pitch_rows.batter_id == pid)]) if len(bat_pas) else None
+        bat_pas = at_bat[at_bat.pa_result.notna()] if len(at_bat) else at_bat
+        batting = batting_line(bat_pas, at_bat[at_bat.result.notna()]) if len(bat_pas) else None
         pitching = pitching_line(on_mound) if len(on_mound) else None
-        line = {"season": season, "team_ids": sorted(teams_of[(season, pid)]), "batting": batting, "pitching": pitching}
+        line = {
+            "season": season, "team_ids": sorted(teams_of[(season, pid)]), "batting": batting, "pitching": pitching,
+            "splits": {
+                "batting": splits(at_bat, "batting") if batting else [],
+                "pitching": splits(on_mound, "pitching") if pitching else [],
+            },
+        }
         per_player[pid].append(line)
         index_rows.append(
             person(pid)

@@ -1,25 +1,57 @@
-import { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
+import { SearchBox } from '../components/SearchBox';
 import { ko } from '../i18n/ko';
-import { loadData } from '../lib/loadData';
-
-type Meta = { built_at: string };
+import { teamName } from '../lib/display';
+import { formatDate, formatDateTime, formatStat } from '../lib/format';
+import type { GameSummary, Meta, Team } from '../lib/types';
+import { useData } from '../lib/useData';
 
 export function Home() {
-  const [meta, setMeta] = useState<Meta | null>(null);
-  const [failed, setFailed] = useState(false);
+  const meta = useData<Meta>('meta.json');
+  const games = useData<GameSummary[]>('games.json').data;
+  const teams = useData<Team[]>('teams.json').data;
 
-  useEffect(() => {
-    loadData<Meta>('meta.json').then(setMeta, () => setFailed(true));
-  }, []);
+  const charted = (games ?? [])
+    .filter((g) => g.pitches > 0)
+    .sort((a, b) => (b.date ?? '').localeCompare(a.date ?? '') || b.game_id.localeCompare(a.game_id));
 
   return (
     <main className="page">
       <h1>{ko.home.title}</h1>
-      <p>{ko.home.placeholder}</p>
-      {failed && <p className="error">{ko.gate.loadError}</p>}
-      {meta && (
-        <p className="muted">
-          {ko.home.builtAt}: {new Date(meta.built_at).toLocaleString('ko-KR')}
+      <div className="home-search">
+        <SearchBox />
+      </div>
+      <p className="row">
+        <Link className="button" to="/leaderboard">{ko.home.hitters} {ko.home.leaderboards}</Link>
+        <Link className="button" to="/leaderboard?role=pitching">{ko.home.pitchers} {ko.home.leaderboards}</Link>
+      </p>
+
+      {meta.error && <p className="error">{ko.gate.loadError}</p>}
+      {meta.data && (
+        <>
+          <p>{ko.home.coverage(meta.data.coverage.games, formatStat(meta.data.coverage.pitches, 'int'))}</p>
+          <p className="muted small">{ko.home.coverageNote}</p>
+        </>
+      )}
+
+      <h2>{ko.home.recentGames}</h2>
+      <ul className="games">
+        {charted.map((g) => (
+          <li key={g.game_id}>
+            <span className="game-label">
+              {g.date ? formatDate(g.date) : ''} {g.label}
+            </span>
+            <span>
+              {teamName(teams, g.away_team_id)} {g.away_score ?? ''} : {g.home_score ?? ''} {teamName(teams, g.home_team_id)}
+            </span>
+            {g.chart_status === 'partial' && <span className="chip">{ko.home.partial}</span>}
+          </li>
+        ))}
+      </ul>
+
+      {meta.data && (
+        <p className="muted small">
+          {ko.home.builtAt}: {formatDateTime(meta.data.built_at)}
         </p>
       )}
     </main>

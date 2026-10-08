@@ -11,9 +11,12 @@ Bottom 1 (home bats, v-p pitches):
   PA7 h-c: in play z6, 2B fly hard, both runners score             -> 2-1 home win (from games.csv final)
 """
 
+import sys
 from pathlib import Path
 
-from rawdata import write_table
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))  # pipeline/, when run as a script
+
+from rawdata import write_table  # noqa: E402
 
 GAME = "fx-1"
 SEASON = "fx-season"
@@ -67,3 +70,26 @@ def write_fixture(raw: Path, pitch_rows: list[dict] | None = None) -> None:
         "home_final": 2, "away_final": 1, "chart_status": "complete", "velo_unit": "km/h",
     }])
     write_table(raw / "pitches" / f"{GAME}.csv", "pitches", pitches() if pitch_rows is None else pitch_rows)
+
+
+def write_site_fixture() -> None:
+    """Write site/src/test/fixture.json (all JSON files for the synthetic game) for the frontend smoke tests.
+    Re-run after changing the JSON export: python pipeline/tests/fixture.py"""
+    import json
+    import tempfile
+
+    from export_json import build_outputs
+    from rawdata import ROOT, load_raw
+
+    with tempfile.TemporaryDirectory() as tmp:
+        write_fixture(Path(tmp))
+        files = build_outputs(load_raw(Path(tmp)))
+    files["meta.json"]["built_at"] = "2026-01-01T00:00:00+00:00"
+    out = ROOT / "site" / "src" / "test" / "fixture.json"
+    out.parent.mkdir(parents=True, exist_ok=True)
+    out.write_text(json.dumps(files, ensure_ascii=False, indent=1), encoding="utf-8")
+    print(f"wrote {out}")
+
+
+if __name__ == "__main__":
+    write_site_fixture()

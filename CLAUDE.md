@@ -11,7 +11,8 @@ Static scouting site for a VR baseball competition. See docs/handoff.md for the 
 - `make test`: pipeline unit tests (Windows: `python -m unittest discover pipeline/tests`)
 - `cd site && npm run dev`: local dev server
 - `cd site && npm run chart`: local charting tool (site/chart.html, src/chart/, chart-server.ts); never built for production
-- `cd site && npm test`: frontend unit tests (vitest; the charting engine)
+- `cd site && npm test`: frontend tests (vitest: charting engine, glossary coverage, page smoke tests)
+- `python pipeline/tests/fixture.py`: regenerate site/src/test/fixture.json after changing the JSON export
 - `cd site && npm run build`: production build
 
 ### Rules

@@ -21,7 +21,7 @@ Changes from the plan below, decided during M0:
 - Schemas: `data/schema/*.schema.json` + `pitch_types.csv` (public repo). Checked by a small built-in validator (`pipeline/rawdata.py`) instead of the `jsonschema` package, to keep dependencies to pandas/numpy/scipy/cryptography.
 - Player identity, rosters and the extra `games.csv` columns: section 4.
 - `import_legacy.py` built, since the legacy games are the site demo: section 4a, "As built".
-- Stats choices: **ERA is reported as RA9** (all runs allowed per 9 innings), because earned and unearned runs are not charted; runs are credited to the pitcher on the mound when they score. Foul tips count as whiffs (Baseball Savant's convention). Outs and runs on each row come from the state on the next row.
+- Stats choices: **ERA is reported as RA9** (all runs allowed per 9 innings), because earned and unearned runs are not charted; runs are credited to the pitcher on the mound when they score. Foul tips count as swings with contact, not whiffs: in this game a "foul tip" is contact the game did not count as a strike (changed in M3; Baseball Savant counts them as whiffs). Outs and runs on each row come from the state on the next row.
 - Not built in M1: the **synthetic seed generator** (section 8). The hand-written fixture covers walks and home runs for the formula tests; the generator is deferred to M4, where point-mode spray charts first need `field_x/field_y` data. Percentiles and priors in `league.json` come with M4/M5.
 
 **M2: built (2026-10-07); done once the owner charts a real game.** `cd site && npm run chart`. Every field, value list, event and export check in `docs/charting-guide.md` is in the tool. How it works and where it differs from section 5:
@@ -35,6 +35,16 @@ Changes from the plan below, decided during M0:
 - `field_x`/`field_y` are positions on the field diagram in `site/src/lib/field.ts` (home plate at (0.5, 0.92), one base path = 0.16), documented in the schema.
 - CI runs the vitest tests and fails if the marker string `VRS_CHARTING_TOOL` or any `*chart*` file appears in `site/dist`.
 - Verified: a scripted game saved through the server passes `validate.py` with no errors or warnings, and the tool was driven in headless Chrome (open game, keyboard entry, ball in play, undo, events, substitution dialog, row editor, save, new-game setup) with no page errors.
+- The owner charted the first inning of `2025-03-14-chun_yankees-patty_dodgers` (partial, SOOP VOD) with every field filled; it validates cleanly and is the reference for what new games look like.
+
+**M3: built (2026-10-08).** Search, leaderboards, player pages, glossary; all Korean.
+- Routes: `/` (search, coverage, charted games), `/leaderboard` (hitters/pitchers tabs, season, team, minimum sample with a "전체 보기" switch, sortable columns; filters live in the URL so a view can be shared), `/player/:slug` (header with VRChat name, team, 투타 such as 우투좌타 or 양투, sample chips; season tables for standard, discipline and batted-ball stats, one row per season; splits and game log for a chosen season), `/glossary`.
+- Stat columns are defined once in `site/src/lib/stats.ts`; labels and help text come from `site/src/i18n/glossary.ko.ts`. `<StatHelp>` opens on tap, closes on Esc, outside tap or scroll, and shows what the stat is, how to read it, the league average from `league.json`, and its scouting use. A vitest test fails the build if a shown stat has no glossary entry.
+- Every rate shows its sample size next to it (small number; hover/tap title says what it counts), except PA- and BF-based rates whose PA/BF column is in the same table.
+- Pipeline additions: per player-season `splits` (vs LHP/RHP or vs LHB/RHB, batter ahead/even/behind, two strikes, RISP, and for hitters velocity bands <100, 100-109, 110-119, 120+ km/h). Results in a split count PAs that ended in it; swing rates count pitches thrown in it. Count names are always from the batter's side. `bats`/`throws` come from the hands recorded in charted games (S if both), else the player default. `players.json` carries more leaderboard fields, each rate with its denominator.
+- Frontend tests: smoke test per page and help popover against `site/src/test/fixture.json`, which is generated from the synthetic pipeline fixture (`python pipeline/tests/fixture.py`) so no real data is in the public repo.
+- Uncertain Korean terms are listed in `docs/ko-review.md`.
+- Not yet: feature guides (사용법) arrive with each view in M4-M6; the 간단히/자세히 toggle comes with M4, when there is a summary to show in the simple view.
 
 ---
 

@@ -88,6 +88,29 @@ class StatsTest(unittest.TestCase):
         self.assertEqual(game["linescore"], {"away": [1], "home": [2]})
         self.assertEqual([p["pa_result"] for p in game["plays"]], ["HR", "BB", "K", "DP", "1B", "HBP", "2B"])
 
+    def test_count_and_velocity_splits(self):
+        # v-c: swinging strike at 0-0 (108), foul at 0-1 (109), swinging strike three at 0-2 (110).
+        rows = {s["key"]: s for s in self.season("v-c")["splits"]["batting"]}
+        self.assertEqual((rows["count_even"]["pitches"], rows["count_even"]["whiffs"]), (1, 1))
+        self.assertEqual((rows["count_behind"]["pitches"], rows["count_behind"]["pa"], rows["count_behind"]["k"]), (2, 1, 1))
+        self.assertEqual((rows["two_strikes"]["pitches"], rows["two_strikes"]["k"]), (1, 1))
+        self.assertEqual((rows["velo_100"]["pitches"], rows["velo_100"]["pa"]), (2, 0))
+        self.assertEqual((rows["velo_110"]["pitches"], rows["velo_110"]["k"]), (1, 1))
+        self.assertNotIn("risp", rows)  # only a runner on first
+        self.assertNotIn("vs_lp", rows)  # no hands recorded in the fixture
+
+    def test_pitching_splits_count_from_the_batters_side(self):
+        # h-p's 3-0 pitch to v-b: the batter is ahead.
+        rows = {s["key"]: s for s in self.season("h-p")["splits"]["pitching"]}
+        self.assertEqual((rows["count_ahead"]["pa"], rows["count_ahead"]["bb"]), (1, 1))
+
+    def test_hands_used(self):
+        from build_stats import hands_used
+        import pandas as pd
+        self.assertEqual(hands_used(pd.Series(["L", "R", None])), "S")
+        self.assertEqual(hands_used(pd.Series(["R", None])), "R")
+        self.assertIsNone(hands_used(pd.Series([None], dtype=object)))
+
     def test_final_play_runs_from_rbi_without_final_score(self):
         out = build_outputs(load_fixture(home_final=None, away_final=None))
         self.assertEqual(out[f"game/{GAME}.json"]["linescore"]["home"], [2])

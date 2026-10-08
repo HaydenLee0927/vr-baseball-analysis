@@ -9,7 +9,9 @@ import pandas as pd
 from rawdata import RawData, columns
 
 SWINGS = {"swinging_strike", "foul", "foul_tip", "in_play"}
-WHIFFS = {"swinging_strike", "foul_tip"}  # Baseball Savant counts foul tips as whiffs
+# In this game a "foul tip" is contact the game did not count as a strike (charting guide),
+# so unlike Baseball Savant it is a swing with contact, not a whiff.
+WHIFFS = {"swinging_strike"}
 STRIKES = {"called_strike", "swinging_strike", "foul", "foul_tip", "in_play"}
 TOTAL_BASES = {"1B": 1, "2B": 2, "3B": 3, "HR": 4}
 NOT_AT_BATS = {"BB", "HBP", "SF", "SH"}
@@ -54,6 +56,16 @@ def pitch_frame(data: RawData) -> pd.DataFrame:
     outs_last = df.pa_result.fillna(df.event).map(OUTS_MADE).fillna(0)
     outs_made = np.where(same_half_next, g.outs.shift(-1) - df.outs, np.where(last_in_game, outs_last, 3 - df.outs))
     df["outs_made"] = np.minimum(np.clip(outs_made, 0, None), 3 - df.outs).astype(int)
+
+    # Hands with the player's default as fallback (switch hitters/pitchers have no default).
+    players = {p["player_id"]: p for p in data.players}
+
+    def default_hand(pid: str, col: str) -> str | None:
+        v = players.get(pid, {}).get(col)
+        return v if v in ("L", "R") else None
+
+    df["p_hand"] = df.pitcher_hand.fillna(df.pitcher_id.map(lambda pid: default_hand(pid, "default_throws")))
+    df["b_side"] = df.batter_side.fillna(df.batter_id.map(lambda pid: default_hand(pid, "default_bats")))
 
     is_pitch = df.result.notna()
     df["swing"] = df.result.isin(SWINGS)
@@ -149,6 +161,56 @@ def batting_game_line(pas: pd.DataFrame) -> dict:
 def pitching_game_line(rows: pd.DataFrame) -> dict:
     p = pitching_line(rows)
     return {k: p[k] for k in ("outs", "ip", "bf", "h", "r", "hr", "bb", "k", "pitches", "velo_max")}
+
+
+SPLIT_FIELDS = [
+    "pa", "ab", "h", "hr", "bb", "k", "avg", "obp", "slg", "ops", "k_pct", "bb_pct",
+    "pitches", "swings", "swing_pct", "whiffs", "whiff_pct", "chase_pitches", "chase_pct",
+]
+# Velocity bands in km/h. The league's range so far is roughly 75-130.
+VELO_BANDS = [("velo_lt100", None, 100), ("velo_100", 100, 110), ("velo_110", 110, 120), ("velo_120", 120, None)]
+
+
+def _split_masks(df: pd.DataFrame, role: str) -> list[tuple[str, pd.Series]]:
+    """Row masks for each split, evaluated on the state before each pitch.
+    Batting splits use the pitcher's hand; pitching splits use the batter's side."""
+    hand_col, hands = ("p_hand", "hp") if role == "batting" else ("b_side", "hb")
+    masks = [
+        (f"vs_l{hands[1]}", df[hand_col] == "L"),
+        (f"vs_r{hands[1]}", df[hand_col] == "R"),
+        # Count names are always from the batter's side, for hitters and pitchers alike.
+        ("count_ahead", df.balls > df.strikes),
+        ("count_even", df.balls == df.strikes),
+        ("count_behind", df.strikes > df.balls),
+        ("two_strikes", df.strikes == 2),
+        ("risp", df.runner_2.notna() | df.runner_3.notna()),
+    ]
+    if role == "batting":
+        for key, lo, hi in VELO_BANDS:
+            masks.append((key, (df.velo >= (lo if lo is not None else -np.inf)) & (df.velo < (hi if hi is not None else np.inf))))
+    return masks
+
+
+def splits(rows: pd.DataFrame, role: str) -> list[dict]:
+    """Split lines for one player's rows (as batter or as pitcher).
+
+    Plate discipline counts the pitches thrown in that situation; results count the plate
+    appearances that ended in it (so a count split shows PAs that ended at that count)."""
+    out = []
+    for key, mask in _split_masks(rows, role):
+        sub = rows[mask]
+        pitches = sub[sub.result.notna()]
+        if pitches.empty:
+            continue
+        line = batting_line(sub[sub.pa_result.notna()], pitches)
+        out.append({"key": key} | {k: line[k] for k in SPLIT_FIELDS})
+    return out
+
+
+def hands_used(sides: pd.Series) -> str | None:
+    """'L', 'R', 'S' (used both) or None, from the hands recorded on the player's pitches."""
+    used = set(sides.dropna())
+    return "S" if used >= {"L", "R"} else used.pop() if used else None
 
 
 def final_score(rows: pd.DataFrame) -> tuple[int, int]:

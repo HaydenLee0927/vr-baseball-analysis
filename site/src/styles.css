@@ -71,7 +71,7 @@ h1 {
 }
 
 .page {
-  max-width: 960px;
+  max-width: 1200px;
   margin: 0 auto;
   padding: 1.5rem 1rem;
 }
@@ -133,4 +133,379 @@ button.link {
   color: var(--muted);
   font-weight: 400;
   padding: 0 0.5rem;
+}
+
+/* Layout */
+a {
+  color: var(--accent);
+}
+
+h2 {
+  font-size: 1.15rem;
+  margin: 1.75rem 0 0.5rem;
+}
+
+h3 {
+  font-size: 0.95rem;
+  margin: 1rem 0 0.4rem;
+  color: var(--muted);
+}
+
+.small {
+  font-size: 0.85rem;
+}
+
+.row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.topbar {
+  flex-wrap: wrap;
+  gap: 0.5rem 1rem;
+}
+
+.topbar nav {
+  display: flex;
+  gap: 1rem;
+  margin-right: auto;
+}
+
+.topbar nav a {
+  color: var(--muted);
+  text-decoration: none;
+}
+
+.topbar nav a.active {
+  color: var(--text);
+  font-weight: 600;
+}
+
+a.button {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  padding: 0 1rem;
+  border-radius: 8px;
+  background: var(--accent);
+  color: var(--accent-text);
+  text-decoration: none;
+  font-weight: 600;
+}
+
+input[type='search'],
+input[type='number'],
+select {
+  min-height: 40px;
+  padding: 0 0.6rem;
+  font: inherit;
+  color: var(--text);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+}
+
+/* Search */
+.search {
+  position: relative;
+}
+
+.search input {
+  width: 14rem;
+  max-width: 100%;
+}
+
+.home-search .search input {
+  width: 100%;
+  font-size: 1.05rem;
+  min-height: 48px;
+}
+
+.search-results {
+  position: absolute;
+  z-index: 20;
+  left: 0;
+  right: 0;
+  min-width: 14rem;
+  margin: 0.25rem 0 0;
+  padding: 0.25rem 0;
+  list-style: none;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  box-shadow: 0 6px 20px rgb(0 0 0 / 0.15);
+}
+
+.search-results li a,
+.search-results li.muted {
+  display: block;
+  padding: 0.6rem 0.8rem;
+  text-decoration: none;
+  color: var(--text);
+}
+
+.search-results li a:hover,
+.search-results li a:focus {
+  background: var(--bg);
+}
+
+/* Leaderboard */
+.tabs {
+  display: flex;
+  gap: 0.25rem;
+  margin: 0.5rem 0 1rem;
+}
+
+.tabs button {
+  background: var(--surface);
+  color: var(--text);
+  border: 1px solid var(--border);
+  padding: 0 1.2rem;
+}
+
+.tabs button.on {
+  background: var(--accent);
+  color: var(--accent-text);
+  border-color: var(--accent);
+}
+
+.filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem 1rem;
+  align-items: end;
+}
+
+.filters label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+
+.filters label.check {
+  flex-direction: row;
+  align-items: center;
+  min-height: 40px;
+  color: var(--text);
+}
+
+.filters input[type='number'] {
+  width: 6rem;
+}
+
+/* Stat tables: scroll sideways on phones, first column stays put */
+.table-wrap {
+  overflow-x: auto;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--surface);
+}
+
+table.stats {
+  border-collapse: collapse;
+  width: 100%;
+  font-variant-numeric: tabular-nums;
+  font-size: 0.9rem;
+}
+
+table.stats th,
+table.stats td {
+  padding: 0.45rem 0.6rem;
+  border-bottom: 1px solid var(--border);
+  text-align: right;
+  white-space: nowrap;
+}
+
+table.stats tbody tr:last-child td {
+  border-bottom: 0;
+}
+
+table.stats th {
+  font-weight: 600;
+  color: var(--muted);
+  vertical-align: bottom;
+}
+
+table.stats .lead {
+  text-align: left;
+}
+
+table.stats tr > :first-child {
+  position: sticky;
+  left: 0;
+  background: var(--surface);
+  z-index: 1;
+}
+
+.th {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.15rem;
+}
+
+button.sort {
+  background: none;
+  color: inherit;
+  border: 0;
+  min-height: 0;
+  padding: 0;
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+small.n {
+  margin-left: 0.25rem;
+  font-size: 0.72em;
+  color: var(--muted);
+}
+
+/* Stat help popover */
+.help {
+  position: relative;
+  display: inline-flex;
+}
+
+button.help-btn {
+  /* 44px tap target around a small visible circle */
+  min-height: 0;
+  width: 1.25rem;
+  height: 1.25rem;
+  padding: 0;
+  border-radius: 50%;
+  font-size: 0.7rem;
+  line-height: 1;
+  background: var(--bg);
+  color: var(--muted);
+  border: 1px solid var(--border);
+  position: relative;
+}
+
+button.help-btn::after {
+  content: '';
+  position: absolute;
+  inset: -12px;
+}
+
+.help-pop {
+  position: fixed;
+  z-index: 30;
+  width: min(20rem, calc(100vw - 16px));
+  max-height: 70vh;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  padding: 0.9rem;
+  text-align: left;
+  white-space: normal;
+  font-weight: 400;
+  color: var(--text);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  box-shadow: 0 8px 28px rgb(0 0 0 / 0.2);
+}
+
+.help-part b {
+  display: block;
+  font-size: 0.8rem;
+  color: var(--muted);
+}
+
+.help-links {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+/* Player page */
+.player-head h1 {
+  font-size: 1.6rem;
+  margin-bottom: 0.25rem;
+}
+
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+
+.chip {
+  display: inline-block;
+  padding: 0.15rem 0.6rem;
+  border-radius: 999px;
+  font-size: 0.8rem;
+  background: var(--bg);
+  border: 1px solid var(--border);
+}
+
+.season-pick {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 1.5rem;
+}
+
+/* Home */
+.home-search {
+  margin: 1rem 0;
+}
+
+ul.games {
+  list-style: none;
+  padding: 0;
+}
+
+ul.games li {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem 1rem;
+  align-items: center;
+  padding: 0.6rem 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.game-label {
+  min-width: 9rem;
+  color: var(--muted);
+}
+
+/* Glossary */
+dl.glossary > div {
+  padding: 0.75rem 0;
+  border-bottom: 1px solid var(--border);
+}
+
+dl.glossary > div.focus {
+  background: var(--bg);
+  outline: 2px solid var(--accent);
+  border-radius: 8px;
+  padding: 0.75rem;
+}
+
+dl.glossary dt {
+  font-weight: 700;
+}
+
+dl.glossary dd {
+  margin: 0.25rem 0 0;
+}
+
+dl.glossary p {
+  margin: 0.2rem 0;
+}
+
+@media (max-width: 640px) {
+  .search input {
+    width: 100%;
+  }
+
+  .topbar .search {
+    flex-basis: 100%;
+  }
 }
