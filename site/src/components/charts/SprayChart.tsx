@@ -98,8 +98,8 @@ export function SprayChart({ rows }: { rows: PitchRec[] }) {
                 ].filter(Boolean);
                 return (
                   <g key={`${r.game_id}-${r.pitch_id}`} {...tip.mark(lines)} className="viz-dot-hit">
-                    <circle cx={r.field_x! * S} cy={r.field_y! * S} r={12} fill="transparent" />
-                    <circle cx={r.field_x! * S} cy={r.field_y! * S} r={5} className={`viz-dot viz-${cls}`} />
+                    <circle cx={r.field_x! * S} cy={r.field_y! * S} r={16} fill="transparent" />
+                    <circle cx={r.field_x! * S} cy={r.field_y! * S} r={8} className={`viz-dot viz-${cls}`} />
                   </g>
                 );
               })}
