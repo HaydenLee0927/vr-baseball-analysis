@@ -14,6 +14,7 @@ from rawdata import RAW_DIR, RawData, check_row, columns, load_raw, load_schema,
 PITCH_ONLY = ["velo", "pitch_type", "pitch_type_source", "zone", "bb_type", "field_x", "field_y", "fielder_pos", "contact_quality"]
 IN_PLAY_ONLY = ["bb_type", "field_x", "field_y", "fielder_pos", "contact_quality"]
 PA_CUT_EVENTS = {"CS", "pickoff"}  # a baserunning out can end an inning before the PA finishes
+FIELDERS = [f"fielder_{n}" for n in range(3, 10)]
 
 
 class Report:
@@ -110,7 +111,7 @@ def check_game(game: dict | None, game_id: str, rows: list[dict], data: RawData,
             report.error(f"{at}: game_id {row['game_id']!r} does not match the file name")
         if row["pitch_id"] != i + 1:
             report.error(f"{at}: pitch_id should be {i + 1}")
-        for col in ("pitcher_id", "batter_id", "catcher_id", "runner_1", "runner_2", "runner_3"):
+        for col in ("pitcher_id", "batter_id", "catcher_id", *FIELDERS, "runner_1", "runner_2", "runner_3"):
             pid = row[col]
             if pid is None:
                 continue

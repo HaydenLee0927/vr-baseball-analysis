@@ -32,7 +32,7 @@ Runs only on your computer; it is never deployed. It reads players and teams fro
 - Every change is autosaved in the browser; close the tab and pick the game up again from **Drafts on this computer**.
 - Games already in `data/raw` can be opened from the start screen to continue or correct them.
 - Keys: type the velocity, click the zone, then **B** ball, **C** called strike, **S** swinging strike, **F** foul, **T** foul tip, **X** in play, **H** hit by pitch; **Enter** records it, **Ctrl+Z** undoes, **V** re-stamps the video time, **Esc** clears the entry.
-- YouTube videos are embedded and their time is stamped automatically. CHZZK/SOOP cannot be embedded: open the video in another window, set the tool's clock to the video time and start it together with the video.
+- YouTube videos are embedded and their time is stamped automatically. SOOP videos are embedded too, but their time cannot be read: set the clock under the video to the video time and start it together with the video. CHZZK cannot be embedded: open it in another window and use the same clock.
 - Click any row in the table to edit it. Edits change that row only; later rows keep their recorded state.
 
 ## Repos

@@ -1,6 +1,7 @@
 // Data from the local chart server (chart-server.ts) and the draft format kept in localStorage.
 
 import {
+  FIELD_POSITIONS,
   inferLineups,
   remember,
   resume,
@@ -98,6 +99,8 @@ export interface Draft {
   pitchTypesShown: 'yes' | 'no' | 'from';
   pitchTypesFromInning: number | null;
   lite: boolean;
+  /** Game uses a designated hitter (the pitcher does not bat). */
+  dh: boolean;
   lineups: Lineups;
   newPlayers: NewPlayer[];
   newTeams: { team_id: string; display_name: null }[];
@@ -143,6 +146,7 @@ export function draftFromSaved(game: GameMeta, rows: PitchRow[], defaults: HandD
     pitchTypesShown: 'yes',
     pitchTypesFromInning: null,
     lite: false,
+    dh: lineups.home.dh !== null || lineups.away.dh !== null,
     lineups,
     newPlayers: [],
     newTeams: [],
@@ -165,10 +169,21 @@ export function storeDraft(d: Draft): void {
   }
 }
 
+/** Fill fields added after a draft was autosaved, so older drafts still open. */
+function normalizeDraft(d: Draft): Draft {
+  for (const l of Object.values(d.lineups)) {
+    l.fielders ??= {};
+    l.dh ??= null;
+  }
+  d.state.fielders ??= { ...d.lineups[d.state.half === 'top' ? 'home' : 'away'].fielders };
+  d.dh ??= false;
+  return d;
+}
+
 export function loadDraft(gameId: string): Draft | null {
   try {
     const raw = localStorage.getItem(PREFIX + gameId);
-    return raw ? (JSON.parse(raw) as Draft) : null;
+    return raw ? normalizeDraft(JSON.parse(raw) as Draft) : null;
   } catch {
     return null;
   }
@@ -209,11 +224,12 @@ export function saveBody(d: Draft): Record<string, unknown> {
     d.lineups[side].order.forEach((p) => add(team[side], p));
     add(team[side], d.lineups[side].pitcher);
     add(team[side], d.lineups[side].catcher);
+    Object.values(d.lineups[side].fielders).forEach((p) => add(team[side], p ?? null));
   }
   for (const r of d.rows) {
     const [bat, fld] = r.half === 'top' ? [team.away, team.home] : [team.home, team.away];
     [r.batter_id, r.runner_1, r.runner_2, r.runner_3].forEach((p) => add(bat, p));
-    [r.pitcher_id, r.catcher_id].forEach((p) => add(fld, p));
+    [r.pitcher_id, r.catcher_id, ...FIELD_POSITIONS.map((n) => r[`fielder_${n}`])].forEach((p) => add(fld, p));
   }
   return { game: d.game, pitches: d.rows, players: d.newPlayers, teams: d.newTeams, rosters: [...roster.values()] };
 }

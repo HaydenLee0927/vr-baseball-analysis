@@ -22,6 +22,13 @@ export interface PitchRow {
   pitcher_id: string;
   batter_id: string;
   catcher_id: string | null;
+  fielder_3: string | null;
+  fielder_4: string | null;
+  fielder_5: string | null;
+  fielder_6: string | null;
+  fielder_7: string | null;
+  fielder_8: string | null;
+  fielder_9: string | null;
   pitcher_hand: Hand | null;
   batter_side: Hand | null;
   home_score: number;
@@ -49,10 +56,22 @@ export interface PitchRow {
   notes: string | null;
 }
 
+/** Positions 3-9 (Savant numbering); pitcher (1) and catcher (2) are kept separately. */
+export const FIELD_POSITIONS = [3, 4, 5, 6, 7, 8, 9] as const;
+export const POSITION_LABEL: Record<number, string> = { 1: 'P', 2: 'C', 3: '1B', 4: '2B', 5: '3B', 6: 'SS', 7: 'LF', 8: 'CF', 9: 'RF' };
+export type Fielders = Partial<Record<number, string | null>>;
+
 export interface Lineup {
   order: string[];
   pitcher: string | null;
   catcher: string | null;
+  fielders: Fielders;
+  /** Designated hitter in the batting order, when the game uses one. */
+  dh: string | null;
+}
+
+export function fieldersOf(row: PitchRow): Fielders {
+  return Object.fromEntries(FIELD_POSITIONS.map((p) => [p, row[`fielder_${p}`]]));
 }
 export type Lineups = Record<Side, Lineup>;
 /** Last hand each player used in this game, carried to their next appearance. */
@@ -73,6 +92,7 @@ export interface State {
   batterId: string | null;
   pitcherId: string | null;
   catcherId: string | null;
+  fielders: Fielders;
   pitcherHand: Hand | null;
   batterSide: Hand | null;
   /** Lineup index of the batter now up (batting team) or due up next half (fielding team). */
@@ -138,6 +158,7 @@ export function initialState(lineups: Lineups, memory: HandMemory, defaults: Han
     batterId,
     pitcherId,
     catcherId: lineups.home.catcher,
+    fielders: { ...lineups.home.fielders },
     pitcherHand: hand(pitcherId, 'throws', memory, defaults),
     batterSide: hand(batterId, 'bats', memory, defaults),
     next: { home: 0, away: 0 },
@@ -165,6 +186,13 @@ export function makeRow(gameId: string, pitchId: number, s: State, e: Entry): Pi
     pitcher_id: s.pitcherId,
     batter_id: s.batterId,
     catcher_id: s.catcherId,
+    fielder_3: s.fielders[3] ?? null,
+    fielder_4: s.fielders[4] ?? null,
+    fielder_5: s.fielders[5] ?? null,
+    fielder_6: s.fielders[6] ?? null,
+    fielder_7: s.fielders[7] ?? null,
+    fielder_8: s.fielders[8] ?? null,
+    fielder_9: s.fielders[9] ?? null,
     pitcher_hand: s.pitcherHand,
     batter_side: s.batterSide,
     home_score: s.homeScore,
@@ -353,6 +381,7 @@ export function advance(prev: State, row: PitchRow, lineups: Lineups, memory: Ha
   const batterId = samePa ? row.batter_id : batterAt(lineups, newBat, next[newBat]);
   const pitcherId = halfOver ? lineups[fld].pitcher : row.pitcher_id;
   const catcherId = halfOver ? lineups[fld].catcher : row.catcher_id;
+  const fielders = halfOver ? { ...lineups[fld].fielders } : fieldersOf(row);
   return {
     inning,
     half,
@@ -366,6 +395,7 @@ export function advance(prev: State, row: PitchRow, lineups: Lineups, memory: Ha
     batterId,
     pitcherId,
     catcherId,
+    fielders,
     pitcherHand: pitcherId === row.pitcher_id ? row.pitcher_hand : hand(pitcherId, 'throws', memory, defaults),
     batterSide: samePa ? row.batter_side : hand(batterId, 'bats', memory, defaults),
     next,
@@ -383,8 +413,8 @@ export function remember(memory: HandMemory, row: PitchRow): HandMemory {
 /** Batting orders, pitchers and catchers as they stand at the end of existing rows (for resuming a game). */
 export function inferLineups(rows: PitchRow[]): Lineups {
   const lineups: Lineups = {
-    home: { order: [], pitcher: null, catcher: null },
-    away: { order: [], pitcher: null, catcher: null },
+    home: { order: [], pitcher: null, catcher: null, fielders: {}, dh: null },
+    away: { order: [], pitcher: null, catcher: null, fielders: {}, dh: null },
   };
   for (const r of rows) {
     const bat = lineups[battingSide(r.half)];
@@ -392,6 +422,13 @@ export function inferLineups(rows: PitchRow[]): Lineups {
     const fld = lineups[fieldingSide(r.half)];
     fld.pitcher = r.pitcher_id;
     fld.catcher = r.catcher_id ?? fld.catcher;
+    for (const p of FIELD_POSITIONS) fld.fielders[p] = r[`fielder_${p}`] ?? fld.fielders[p] ?? null;
+  }
+  // A batter who never fielded while the pitcher was not in the order is the DH.
+  for (const l of Object.values(lineups)) {
+    const fielding = new Set([l.pitcher, l.catcher, ...Object.values(l.fielders)]);
+    if (l.pitcher && !l.order.includes(l.pitcher) && Object.values(l.fielders).some(Boolean))
+      l.dh = l.order.find((id) => !fielding.has(id)) ?? null;
   }
   return lineups;
 }
@@ -421,6 +458,7 @@ export function resume(rows: PitchRow[], lineups: Lineups, memory: HandMemory, d
     batterId: last.batter_id,
     pitcherId: last.pitcher_id,
     catcherId: last.catcher_id,
+    fielders: fieldersOf(last),
     pitcherHand: last.pitcher_hand,
     batterSide: last.batter_side,
     next,

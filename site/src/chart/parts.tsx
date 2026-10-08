@@ -169,6 +169,12 @@ export function FieldDiagram(props: {
   );
 }
 
+/** SOOP VODs can be embedded, but their playback time cannot be read (no player API). */
+function soopEmbed(url: string | null): string | null {
+  const m = url?.match(/vod\.sooplive\.(?:com|co\.kr)\/player\/(\d+)/);
+  return m ? `https://vod.sooplive.com/player/${m[1]}/embed` : null;
+}
+
 function youtubeId(url: string | null): string | null {
   if (!url) return null;
   const m = url.match(/(?:youtu\.be\/|[?&]v=|\/live\/|\/embed\/|\/shorts\/)([\w-]{11})/);
@@ -210,9 +216,9 @@ export function formatClock(sec: number | null): string {
 }
 
 /**
- * YouTube VODs are embedded and their playback time is read directly. Other sites (CHZZK, SOOP)
- * cannot be read, so a manual clock is used: set it to the video time once and start it together
- * with the video.
+ * YouTube VODs are embedded and their playback time is read directly. SOOP VODs are embedded but
+ * their time cannot be read; CHZZK cannot be embedded at all. For those a manual clock is used:
+ * set it to the video time once and start it together with the video.
  */
 export function VideoPane(props: { url: string | null; onClock: (get: () => number | null) => void }) {
   const ytId = youtubeId(props.url);
@@ -248,10 +254,15 @@ export function VideoPane(props: { url: string | null; onClock: (get: () => numb
 
   if (ytId) return <div className="video" ref={box} />;
   const now = clock.base + (clock.startedAt ? (Date.now() - clock.startedAt) / 1000 : 0);
+  const soop = soopEmbed(props.url);
   return (
+    <div>
+      {soop && <iframe className="video" src={soop} allow="autoplay; fullscreen" allowFullScreen title="video" />}
     <div className="video manual">
       <p className="muted small">
-        {props.url ? (
+        {soop ? (
+          'SOOP does not let the tool read the video time: set the clock below to the video time and start it together with the video.'
+        ) : props.url ? (
           <>
             This video cannot be embedded.{' '}
             <a href={props.url} target="_blank" rel="noreferrer">
@@ -284,6 +295,7 @@ export function VideoPane(props: { url: string | null; onClock: (get: () => numb
           {clock.startedAt ? 'Pause' : 'Start'}
         </button>
       </div>
+    </div>
     </div>
   );
 }

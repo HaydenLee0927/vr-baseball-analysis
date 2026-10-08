@@ -12,7 +12,8 @@ The charting tool fills in the count, outs, inning, score and runners for you an
 | Date | 2026-03-14 |
 | Home team, away team | 50_texas, royal_buffalos |
 | Video link | stream or VOD URL |
-| Lineups | each player's nickname exactly as shown in game |
+| Lineups | each player's nickname exactly as shown in game, in batting order, with their position (P, C, 1B, 2B, 3B, SS, LF, CF, RF, or DH) |
+| DH used? | yes / no. With a DH the pitcher does not bat and is set separately. |
 | Pitch type shown on stream? | yes / no / from inning N |
 | Final score | used to check the charting adds up |
 
@@ -49,7 +50,9 @@ Always record how the at-bat ended. This was the most common gap in the earlier 
 
 ## Between pitches
 
-Record these as events, not in the notes, so they can be counted: stolen base, caught stealing, wild pitch or passed ball, pickoff, substitution (pitcher, catcher, pinch hitter). After any of them, check the runners and outs the tool shows.
+Record these as events, not in the notes, so they can be counted: stolen base, caught stealing, wild pitch or passed ball, pickoff, substitution (pitcher, any fielder, pinch hitter). After any of them, check the runners and outs the tool shows.
+
+Keep the defense current: when a new player comes in, use the substitution; when players already in the game swap positions, change them in the Defense panel. Record the listed position, not where a player happens to stand on one pitch.
 
 ## Notes
 

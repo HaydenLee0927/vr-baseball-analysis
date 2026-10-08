@@ -4,9 +4,12 @@ import {
   advance,
   battingSide,
   checkGame,
+  FIELD_POSITIONS,
+  fieldersOf,
   fieldingSide,
   hand,
   makeRow,
+  POSITION_LABEL,
   remember,
   suggestPaResult,
   type BbType,
@@ -63,7 +66,7 @@ function rowToState(r: PitchRow, next: State['next']): State {
   return {
     inning: r.inning, half: r.half, balls: r.balls, strikes: r.strikes, outs: r.outs,
     homeScore: r.home_score, awayScore: r.away_score, runners: [r.runner_1, r.runner_2, r.runner_3],
-    paId: r.pa_id, batterId: r.batter_id, pitcherId: r.pitcher_id, catcherId: r.catcher_id,
+    paId: r.pa_id, batterId: r.batter_id, pitcherId: r.pitcher_id, catcherId: r.catcher_id, fielders: fieldersOf(r),
     pitcherHand: r.pitcher_hand, batterSide: r.batter_side, next,
   };
 }
@@ -85,7 +88,8 @@ export function Chart(props: {
   const [form, setForm] = useState<Form>(emptyForm);
   const [error, setError] = useState<string | null>(null);
   const [editing, setEditing] = useState<PitchRow | null>(null);
-  const [sub, setSub] = useState<'pitcher' | 'catcher' | 'batter' | null>(null);
+  // Substitution dialog: a defensive position (1-9) or 'batter' (pinch hitter).
+  const [sub, setSub] = useState<number | 'batter' | null>(null);
   const [saving, setSaving] = useState<{ issues: Issue[]; result: SaveResult | null; error: string | null; busy: boolean } | null>(null);
   const clock = useRef<() => number | null>(() => null);
   const veloRef = useRef<HTMLInputElement>(null);
@@ -169,34 +173,61 @@ export function Chart(props: {
     update({ rows: draft.rows.slice(0, -1), before: draft.before.slice(0, -1), state: prev });
   }
 
-  function substitute(role: 'pitcher' | 'catcher' | 'batter', id: string) {
-    const side = role === 'batter' ? bat : fld;
-    const old = role === 'pitcher' ? state.pitcherId : role === 'catcher' ? state.catcherId : state.batterId;
+  function holder(pos: number | 'batter'): string | null {
+    if (pos === 'batter') return state.batterId;
+    if (pos === 1) return state.pitcherId;
+    if (pos === 2) return state.catcherId;
+    return state.fielders[pos] ?? null;
+  }
+
+  /** Put `id` in for whoever holds `pos`; they also take that player's batting-order spot. */
+  function substitute(pos: number | 'batter', id: string) {
+    const side = pos === 'batter' ? bat : fld;
+    const old = holder(pos);
+    const label = pos === 'batter' ? 'PH' : POSITION_LABEL[pos];
     let { rows, before } = draft;
     if (state.batterId && state.pitcherId) {
       const row = makeRow(game.game_id, rows.length + 1, state, {
-        kind: 'event', event: 'sub', vodTs: clock.current(), notes: `sub ${role}: ${people.name(old)} -> ${people.name(id)}`,
+        kind: 'event', event: 'sub', vodTs: clock.current(), notes: `sub ${label}: ${people.name(old)} -> ${people.name(id)}`,
       });
       rows = [...rows, row];
       before = [...before, state];
     }
-    const l = { ...lineups[side] };
-    const s: State = { ...state };
-    if (role === 'pitcher') {
-      l.pitcher = id;
-      s.pitcherId = id;
-      s.pitcherHand = hand(id, 'throws', draft.memory, defaults);
-    } else if (role === 'catcher') {
-      l.catcher = id;
-      s.catcherId = id;
-    } else {
-      l.order = l.order.map((p) => (p === old ? id : p));
-      if (!l.order.includes(id)) l.order = [...l.order, id];
+    const l = { ...lineups[side], fielders: { ...lineups[side].fielders } };
+    const s: State = { ...state, fielders: { ...state.fielders } };
+    if (old && l.order.includes(old)) l.order = l.order.map((p) => (p === old ? id : p));
+    else if (pos === 'batter' && !l.order.includes(id)) l.order = [...l.order, id];
+    if (l.dh === old) l.dh = id;
+    // A player already in the game who moves here leaves their old position empty.
+    if (pos !== 'batter') {
+      for (const p of FIELD_POSITIONS) {
+        if (s.fielders[p] === id) s.fielders[p] = null;
+        if (l.fielders[p] === id) l.fielders[p] = null;
+      }
+      if (pos !== 2 && s.catcherId === id) l.catcher = s.catcherId = null;
+      if (pos !== 1 && s.pitcherId === id) l.pitcher = s.pitcherId = null;
+    }
+    if (pos === 'batter') {
       s.batterId = id;
       s.batterSide = hand(id, 'bats', draft.memory, defaults);
+    } else if (pos === 1) {
+      l.pitcher = s.pitcherId = id;
+      s.pitcherHand = hand(id, 'throws', draft.memory, defaults);
+    } else if (pos === 2) {
+      l.catcher = s.catcherId = id;
+    } else {
+      l.fielders[pos] = s.fielders[pos] = id;
     }
     update({ rows, before, lineups: { ...lineups, [side]: l }, state: s });
     setSub(null);
+  }
+
+  /** Move a player already in the game to another position (no new player, no event row). */
+  function setFielder(pos: number, id: string | null) {
+    const fielders = { ...state.fielders };
+    for (const p of FIELD_POSITIONS) if (id && fielders[p] === id) fielders[p] = null;
+    fielders[pos] = id;
+    update({ state: { ...state, fielders }, lineups: { ...lineups, [fld]: { ...lineups[fld], fielders } } });
   }
 
   async function save(force: boolean) {
@@ -247,7 +278,10 @@ export function Chart(props: {
     return () => window.removeEventListener('keydown', onKey);
   }, []);
 
-  const teamPlayers = (side: Side) => [...new Set([...lineups[side].order, lineups[side].pitcher, lineups[side].catcher].filter(Boolean) as string[])];
+  const teamPlayers = (side: Side) => {
+    const l = lineups[side];
+    return [...new Set([...l.order, l.pitcher, l.catcher, l.dh, ...Object.values(l.fielders)].filter(Boolean) as string[])];
+  };
   const handPick = (value: Hand | null, onPick: (h: Hand | null) => void) => (
     <Choice options={['L', 'R'] as Hand[]} value={value} onChange={onPick} />
   );
@@ -344,6 +378,15 @@ export function Chart(props: {
             </span>
             <span>Catcher</span>
             <PlayerSelect people={people} value={state.catcherId} options={teamPlayers(fld)} onChange={(id) => setState({ catcherId: id })} />
+            <span>Defense</span>
+            <span className="defense">
+              {FIELD_POSITIONS.map((p) => (
+                <label key={p}>
+                  {POSITION_LABEL[p]}
+                  <PlayerSelect people={people} value={state.fielders[p] ?? null} options={teamPlayers(fld)} onChange={(id) => setFielder(p, id)} />
+                </label>
+              ))}
+            </span>
             {(['1st', '2nd', '3rd'] as const).map((b, i) => (
               <span key={b} className="contents">
                 <span>Runner {b}</span>
@@ -369,8 +412,8 @@ export function Chart(props: {
             ))}
           </div>
           <div className="choice">
-            <button type="button" onClick={() => setSub('pitcher')}>Pitching change</button>
-            <button type="button" onClick={() => setSub('catcher')}>Catcher change</button>
+            <button type="button" onClick={() => setSub(1)}>Pitching change</button>
+            <button type="button" onClick={() => setSub(2)}>Defensive sub</button>
             <button type="button" onClick={() => setSub('batter')}>Pinch hitter</button>
           </div>
           <p className="muted small">After an event, check the runners and outs above.</p>
@@ -503,12 +546,23 @@ export function Chart(props: {
         />
       )}
 
-      {sub && (
+      {sub !== null && (
         <div className="modal" role="dialog" aria-modal="true">
           <div className="card">
-            <h2>{sub === 'pitcher' ? 'Pitching change' : sub === 'catcher' ? 'Catcher change' : 'Pinch hitter'}</h2>
+            <h2>{sub === 'batter' ? 'Pinch hitter' : sub === 1 ? 'Pitching change' : 'Defensive substitution'}</h2>
+            {sub !== 'batter' && sub !== 1 && (
+              <label>
+                Position{' '}
+                <select value={sub} onChange={(e) => setSub(Number(e.target.value))}>
+                  {[2, ...FIELD_POSITIONS].map((p) => (
+                    <option key={p} value={p}>{POSITION_LABEL[p]}</option>
+                  ))}
+                </select>
+              </label>
+            )}
             <p className="muted small">
-              Replacing {people.name(sub === 'pitcher' ? state.pitcherId : sub === 'catcher' ? state.catcherId : state.batterId) || '—'} ({sub === 'batter' ? game[`${bat}_team_id`] : game[`${fld}_team_id`]})
+              Replacing {people.name(holder(sub)) || '—'} ({game[`${sub === 'batter' ? bat : fld}_team_id`]}). The new player also takes their batting-order spot.
+              To move players already in the game between positions, use the Defense selects instead.
             </p>
             <PlayerPicker
               people={people}

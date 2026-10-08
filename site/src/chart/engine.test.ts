@@ -18,8 +18,8 @@ import {
 } from './engine';
 
 const lineups = (): Lineups => ({
-  home: { order: ['h1', 'h2', 'h3'], pitcher: 'hp', catcher: 'hc' },
-  away: { order: ['a1', 'a2', 'a3'], pitcher: 'ap', catcher: 'ac' },
+  home: { order: ['h1', 'h2', 'h3'], pitcher: 'hp', catcher: 'hc', fielders: { 3: 'h1', 6: 'h2', 8: 'h3' }, dh: null },
+  away: { order: ['a1', 'a2', 'a3'], pitcher: 'ap', catcher: 'ac', fielders: { 3: 'a1', 6: 'a2', 8: 'a3' }, dh: null },
 });
 
 function pitch(result: Result, paResult: PaResult | null = null, extra: Partial<Entry> = {}): Entry {
@@ -121,6 +121,20 @@ describe('half-innings', () => {
     expect([after.inning, after.half, after.batterId]).toEqual([2, 'top', 'a1']);
   });
 
+  it('every row records the defense, which changes with the half-inning', () => {
+    const { rows, state } = play([...groundout(), ...groundout(), ...groundout(), ...groundout()]);
+    expect([rows[0].fielder_3, rows[0].fielder_6, rows[0].fielder_8, rows[0].fielder_4]).toEqual(['h1', 'h2', 'h3', null]);
+    expect([rows[3].half, rows[3].fielder_3, rows[3].fielder_6]).toEqual(['bot', 'a1', 'a2']);
+    expect(state.fielders[8]).toBe('a3');
+  });
+
+  it('a mid-inning defensive change carries to the next pitch', () => {
+    const l = lineups();
+    const start = { ...initialState(l, {}, {}), fielders: { ...l.home.fielders, 7: 'h9' } };
+    const { rows } = play([pitch('ball'), pitch('ball')], l, start);
+    expect(rows.map((r) => r.fielder_7)).toEqual(['h9', 'h9']);
+  });
+
   it('runs on the third out do not count', () => {
     const { state } = play([pitch('in_play', '3B'), ...groundout(), ...groundout(), pitch('in_play', 'out')]);
     expect(state.awayScore).toBe(0);
@@ -156,9 +170,20 @@ describe('resume', () => {
     const l = inferLineups(rows);
     expect(l.away.order).toEqual(['a1', 'a2', 'a3']);
     expect(l.home.pitcher).toBe('hp');
+    expect(l.home.fielders).toMatchObject({ 3: 'h1', 6: 'h2', 8: 'h3' });
     const resumed = resume(rows, l, {}, {});
     expect({ ...resumed, next: null }).toEqual({ ...state, next: null });
     expect(resumed.batterId).toBe('a3');
+  });
+});
+
+describe('designated hitter', () => {
+  it('a batter who never fields while the pitcher does not bat is found as the DH', () => {
+    const l = lineups();
+    l.home = { order: ['h1', 'h2', 'hd'], pitcher: 'hp', catcher: 'h2', fielders: { 3: 'h1' }, dh: 'hd' };
+    const { rows } = play([...groundout(), ...groundout(), ...groundout(), ...groundout(), ...groundout(), ...groundout()], l);
+    expect(inferLineups(rows).home.dh).toBe('hd');
+    expect(inferLineups(rows).away.dh).toBeNull(); // every away batter also fields
   });
 });
 

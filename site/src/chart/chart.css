@@ -120,6 +120,11 @@ label.check { flex-direction: row !important; align-items: center; gap: 0.4rem; 
 .pane { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 0.75rem; min-width: 0; }
 .video { aspect-ratio: 16 / 9; width: 100%; background: #000; border-radius: 6px; margin-bottom: 0.5rem; }
 .video.manual { background: none; aspect-ratio: auto; }
+iframe.video { border: 0; display: block; }
+.defense { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 0.25rem 0.5rem; }
+.defense label { display: flex; flex-direction: column; font-size: 0.8em; color: var(--muted); }
+.defense select { width: 100%; }
+.order select { margin-right: 0.3rem; }
 .clock { font: 2rem ui-monospace, monospace; margin: 0.5rem 0; }
 .score { margin-left: 1rem; font-weight: 400; }
 

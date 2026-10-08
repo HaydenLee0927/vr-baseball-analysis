@@ -1,12 +1,37 @@
 import { useMemo, useState } from 'react';
 import type { Draft, GameMeta, NewPlayer, ServerData } from './data';
-import type { Lineup, Lineups, Side } from './engine';
+import { FIELD_POSITIONS, POSITION_LABEL, type Lineup, type Lineups, type Side } from './engine';
 import { PlayerPicker } from './parts';
 import { People } from './people';
 
 const ID = /^[a-z0-9][a-z0-9_-]*$/;
 
-export type SetupResult = Pick<Draft, 'game' | 'lineups' | 'pitchTypesShown' | 'pitchTypesFromInning' | 'lite' | 'newPlayers' | 'newTeams'>;
+export type SetupResult = Pick<Draft, 'game' | 'lineups' | 'pitchTypesShown' | 'pitchTypesFromInning' | 'lite' | 'dh' | 'newPlayers' | 'newTeams'>;
+
+const emptyLineup = (): Lineup => ({ order: [], pitcher: null, catcher: null, fielders: {}, dh: null });
+
+/** Position a player holds in a lineup: 1 P, 2 C, 3-9 fielders, 'DH', or '' for none. */
+function positionOf(l: Lineup, id: string): string {
+  if (l.pitcher === id) return '1';
+  if (l.catcher === id) return '2';
+  const f = FIELD_POSITIONS.find((p) => l.fielders[p] === id);
+  if (f) return String(f);
+  return l.dh === id ? 'DH' : '';
+}
+
+/** Give `id` the position `pos`, taking it from whoever had it and clearing id's old position. */
+function assignPosition(l: Lineup, id: string, pos: string): Lineup {
+  const next: Lineup = { ...l, fielders: { ...l.fielders } };
+  if (next.pitcher === id) next.pitcher = null;
+  if (next.catcher === id) next.catcher = null;
+  if (next.dh === id) next.dh = null;
+  for (const p of FIELD_POSITIONS) if (next.fielders[p] === id) next.fielders[p] = null;
+  if (pos === '1') next.pitcher = id;
+  else if (pos === '2') next.catcher = id;
+  else if (pos === 'DH') next.dh = id;
+  else if (pos) next.fielders[Number(pos)] = id;
+  return next;
+}
 
 function today(): string {
   const d = new Date();
@@ -25,8 +50,9 @@ export function Setup(props: { data: ServerData; draft: Draft | null; takenIds: 
   const editing = props.draft !== null;
   const [game, setGame] = useState<GameMeta>(props.draft?.game ?? emptyGame());
   const [lineups, setLineups] = useState<Lineups>(
-    props.draft?.lineups ?? { home: { order: [], pitcher: null, catcher: null }, away: { order: [], pitcher: null, catcher: null } },
+    props.draft?.lineups ?? { home: emptyLineup(), away: emptyLineup() },
   );
+  const [dh, setDh] = useState(props.draft?.dh ?? false);
   const [shown, setShown] = useState(props.draft?.pitchTypesShown ?? 'yes');
   const [fromInning, setFromInning] = useState<number | null>(props.draft?.pitchTypesFromInning ?? null);
   const [lite, setLite] = useState(props.draft?.lite ?? false);
@@ -56,10 +82,19 @@ export function Setup(props: { data: ServerData; draft: Draft | null; takenIds: 
     if (shown === 'from' && !fromInning) e.push('Enter the inning pitch types started showing.');
     setErrors(e);
     if (e.length) return;
+    const warnings: string[] = [];
+    for (const side of ['away', 'home'] as Side[]) {
+      const l = lineups[side];
+      const open = [2, ...FIELD_POSITIONS].filter((p) => (p === 2 ? !l.catcher : !l.fielders[p])).map((p) => POSITION_LABEL[p]);
+      if (open.length) warnings.push(`${side}: no player at ${open.join(', ')}`);
+      if (!dh && l.pitcher && !l.order.includes(l.pitcher)) warnings.push(`${side}: the pitcher is not in the batting order (no DH)`);
+      if (dh && !l.dh) warnings.push(`${side}: no DH chosen`);
+    }
+    if (warnings.length && !confirm(`Defense is incomplete:\n\n${warnings.join('\n')}\n\nStart anyway? You can fill it in later.`)) return;
     const newTeams = [game.home_team_id, game.away_team_id]
       .filter((t) => !teamIds.includes(t))
       .map((team_id) => ({ team_id, display_name: null }));
-    props.onDone({ game: { ...game, season: game.season.trim() }, lineups, pitchTypesShown: shown, pitchTypesFromInning: shown === 'from' ? fromInning : null, lite, newPlayers, newTeams });
+    props.onDone({ game: { ...game, season: game.season.trim() }, lineups, pitchTypesShown: shown, pitchTypesFromInning: shown === 'from' ? fromInning : null, lite, dh, newPlayers, newTeams });
   }
 
   const lineupEditor = (side: Side) => {
@@ -76,9 +111,16 @@ export function Setup(props: { data: ServerData; draft: Draft | null; takenIds: 
           {l.order.map((id, i) => (
             <li key={id}>
               <span>{people.name(id)}</span>
+              <select value={positionOf(l, id)} onChange={(e) => setLineups({ ...lineups, [side]: assignPosition(l, id, e.target.value) })} aria-label="position">
+                <option value="">pos.</option>
+                {[1, 2, ...FIELD_POSITIONS].filter((p) => p !== 1 || !dh).map((p) => (
+                  <option key={p} value={String(p)}>{POSITION_LABEL[p]}</option>
+                ))}
+                {dh && <option value="DH">DH</option>}
+              </select>
               <button type="button" className="mini" disabled={i === 0} onClick={() => move(i, -1)} aria-label="move up">↑</button>
               <button type="button" className="mini" disabled={i === l.order.length - 1} onClick={() => move(i, 1)} aria-label="move down">↓</button>
-              <button type="button" className="mini" onClick={() => setLineup(side, { order: l.order.filter((x) => x !== id) })} aria-label="remove">✕</button>
+              <button type="button" className="mini" onClick={() => setLineups({ ...lineups, [side]: { ...assignPosition(l, id, ''), order: l.order.filter((x) => x !== id) } })} aria-label="remove">✕</button>
             </li>
           ))}
         </ol>
@@ -91,10 +133,10 @@ export function Setup(props: { data: ServerData; draft: Draft | null; takenIds: 
         <div className="kv">
           <span>Pitcher</span>
           <b>{people.name(l.pitcher) || '—'}</b>
-          <PlayerPicker people={people} placeholder="Set pitcher" onNewPlayer={(p) => setNewPlayers((ps) => [...ps, p])} onPick={(id) => setLineup(side, { pitcher: id })} />
+          <PlayerPicker people={people} placeholder="Set pitcher" onNewPlayer={(p) => setNewPlayers((ps) => [...ps, p])} onPick={(id) => setLineups({ ...lineups, [side]: assignPosition(l, id, '1') })} />
           <span>Catcher</span>
           <b>{people.name(l.catcher) || '—'}</b>
-          <PlayerPicker people={people} placeholder="Set catcher" onNewPlayer={(p) => setNewPlayers((ps) => [...ps, p])} onPick={(id) => setLineup(side, { catcher: id })} />
+          <PlayerPicker people={people} placeholder="Set catcher" onNewPlayer={(p) => setNewPlayers((ps) => [...ps, p])} onPick={(id) => setLineups({ ...lineups, [side]: assignPosition(l, id, '2') })} />
         </div>
       </section>
     );
@@ -168,6 +210,10 @@ export function Setup(props: { data: ServerData; draft: Draft | null; takenIds: 
         <label>
           Game version (optional)
           <input value={game.game_version ?? ''} onChange={(e) => set('game_version', text(e.target.value))} />
+        </label>
+        <label className="check">
+          <input type="checkbox" checked={dh} onChange={(e) => setDh(e.target.checked)} />
+          DH used (the pitcher does not bat)
         </label>
         <label className="check">
           <input type="checkbox" checked={lite} onChange={(e) => setLite(e.target.checked)} />
