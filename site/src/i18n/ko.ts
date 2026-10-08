@@ -49,6 +49,7 @@ export const ko = {
     allTeams: '전체 팀',
     minSample: { batting: '최소 타석', pitching: '최소 상대 타자' },
     showAll: '전체 보기',
+    noneQualified: (min: number) => `아직 기준(${min}) 이상인 선수가 없어 모든 선수를 보여 줍니다. 표본이 작으니 참고만 하세요.`,
     player: '선수',
     count: (n: number) => `${n}명`,
     sortHint: '열 제목을 누르면 정렬됩니다.',

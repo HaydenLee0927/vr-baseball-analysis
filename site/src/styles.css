@@ -918,3 +918,12 @@ ul.pctl li {
   max-height: 85vh;
   overflow: auto;
 }
+
+.notice {
+  padding: 0.6rem 0.8rem;
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--accent);
+  border-radius: 8px;
+  background: var(--surface);
+  font-size: 0.9rem;
+}

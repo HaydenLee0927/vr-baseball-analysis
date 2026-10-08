@@ -35,8 +35,11 @@ export function Leaderboard() {
 
   const sample = (p: PlayerIndexRow) => Number((role === 'batting' ? p.batting?.pa : p.pitching?.bf) ?? 0);
   const seasonTeams = [...new Set(players.data.filter((p) => p.season === season).flatMap((p) => p.team_ids))].sort();
-  const rows = players.data
-    .filter((p) => p.season === season && p[role] && (!team || p.team_ids.includes(team)) && (showAll || sample(p) >= min))
+  const eligible = players.data.filter((p) => p.season === season && p[role] && (!team || p.team_ids.includes(team)));
+  const qualified = eligible.filter((p) => sample(p) >= min);
+  // Early in a season nobody reaches the minimum; show everyone rather than an empty table.
+  const fallback = !showAll && qualified.length === 0 && eligible.length > 0;
+  const rows = (showAll || fallback ? eligible : qualified)
     .map((p) => {
       const teamLabel = p.team_ids.map((t) => teamName(teams, t)).join(', ');
       return {
@@ -84,6 +87,7 @@ export function Leaderboard() {
           {ko.leaderboard.showAll}
         </label>
       </div>
+      {fallback && <p className="notice">{ko.leaderboard.noneQualified(min)}</p>}
       <p className="muted small">
         {ko.leaderboard.count(rows.length)} · {ko.leaderboard.sortHint}
       </p>

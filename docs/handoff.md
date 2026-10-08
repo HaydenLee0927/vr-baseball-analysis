@@ -49,7 +49,7 @@ Changes from the plan below, decided during M0:
 
 **Open items (as of 2026-10-08)**
 - **Partial game not in the data repo yet.** `2025-03-14-chun_yankees-patty_dodgers` and the players, teams and roster rows the charting tool added with it exist only in the owner's local `data/raw`. The live site will not show them until the data repo is committed and pushed, and the site is rebuilt (a push to the code repo, or "Re-run all jobs" on the latest deploy).
-- **Season names.** The new game is season `wbd-2025`; the legacy games are `wbd-legacy`. They look like the same competition (03-14 to 03-19, including a 8강), which gives players two season lines. Owner to decide whether to rename the legacy season to `wbd-2025` (one edit in `games.csv` and `rosters.csv` via `import_legacy.py`).
+- **Season names (decided 2026-10-08):** `wbd-legacy` is a test dataset only and stays a separate season. `wbd-2025` is the official 2025 WBD competition; real 2025 games are charted into it.
 - **Korean wording review**: `docs/ko-review.md` (15 terms).
 - **Display names**: `players.csv` and `teams.csv` `display_name` columns are still blank, so the site shows VRChat names and team IDs.
 - Data-repo pushes do not trigger a site rebuild yet; a `repository_dispatch` from the data repo would need a token there (offered, not built).
@@ -69,7 +69,9 @@ Changes from the plan below, decided during M0:
 - Tests: 23 pipeline (percentile ranks added), 160 frontend (chart helpers, simple/detailed views, filters, area-mode fallback, no-detailed-data fallback).
 - Not built: the first-visit walkthrough on the player page (section 7b), and the auto-generated scouting summary (M6).
 
-**Next: M5** (section 9): shrinkage and credible intervals, multi-season pooling, low-sample badges. The open items above (season names, Korean review, display names) still apply.
+- (2026-10-08) Leaderboard fix: when nobody in the season reaches the minimum sample (early in `wbd-2025`, one inning charted), the leaderboard shows every player with a note instead of an empty table, so players and their charts stay reachable.
+
+**Next: M5** (section 9): shrinkage and credible intervals, multi-season pooling, low-sample badges. The open items above (Korean review, display names) still apply.
 
 ---
 

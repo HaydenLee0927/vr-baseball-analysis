@@ -42,9 +42,14 @@ describe('pages', () => {
     expect(await screen.findByText(/away 1 : 2 home/)).toBeTruthy();
   });
 
-  it('hitter leaderboard hides small samples until "전체 보기"', async () => {
+  it('hitter leaderboard shows everyone, with a note, when nobody reaches the minimum', async () => {
     at('/leaderboard');
-    expect(await screen.findByText('기록이 없습니다.')).toBeTruthy(); // nobody has 5 PA in one inning
+    expect(await screen.findByText(/아직 기준\(5\) 이상인 선수가 없어/)).toBeTruthy(); // nobody has 5 PA in one inning
+    expect(within(screen.getByRole('table')).getByText('VR_v-a')).toBeTruthy();
+    cleanup();
+    at('/leaderboard?min=1');
+    expect(await screen.findByRole('table')).toBeTruthy();
+    expect(screen.queryByText(/아직 기준/)).toBeNull(); // everyone has 1 PA: the minimum applies normally
     cleanup();
     at('/leaderboard?all=1');
     const table = await screen.findByRole('table');
