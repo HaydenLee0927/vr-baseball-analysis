@@ -54,7 +54,22 @@ Changes from the plan below, decided during M0:
 - **Display names**: `players.csv` and `teams.csv` `display_name` columns are still blank, so the site shows VRChat names and team IDs.
 - Data-repo pushes do not trigger a site rebuild yet; a `repository_dispatch` from the data repo would need a token there (offered, not built).
 
-**Next: M4** (section 9): spray chart (position mode for all games, point mode where `field_x/field_y` exist, outline from `site/src/lib/field.ts`), zone grid, velocity charts, percentile bars, the 간단히/자세히 toggle, feature guides for those views, and the synthetic seed generator deferred from M1.
+- (2026-10-08) The partial game is now committed to the data repo (`2b809f4`); it can still be continued or corrected later by opening it in the charting tool and saving again.
+
+**M4: built (2026-10-08).** Charts on the player page. **Owner's scope decision: the new charts and percentiles use only games charted in the charting tool**; legacy imports stay in the tables only, since they lack landing spots, pitch types and defense.
+- A game is "detailed" when `games.csv` `charted_by` is not `legacy`; `games.json` carries `detailed`. Player files' `pitches` lists (the chart data) contain detailed games only, with `pitch_id`, `p_hand` and `b_side` (hands with the player's default filled in) added.
+- **Percentile bars** (Savant style, blue = low, gray = middle, red = high): computed per season from detailed games, among players with at least 10 PA (hitters) or 15 BF (pitchers), and only when at least 5 players qualify; otherwise the card says there are not enough players yet. Players below the bar show their value with "표본 부족". Stats: hitters OPS, K%, BB%, whiff%, chase%, hard-hit%; pitchers K%, BB%, whiff%, CSW%, chase%, average velocity, hard-hit% allowed (`PERCENTILE_STATS` in `build_stats.py`). Credible intervals come in M5.
+- **Spray chart**: point mode (landing spots, colored hit / out / error-other, legend with counts) and area mode (share of balls in play per fielder; wedges around the field outline). Point mode is the default when landing spots exist.
+- **Zone chart**: 9 cells + 4 outside quadrants, catcher's view, metric switch (pitch share, swing%, whiff%, AVG); cells with fewer than 3 pitches show "–".
+- **Velocity**: pitchers get a 5 km/h histogram and average by inning (from 2 innings up); hitters get whiff% by velocity band.
+- One filter row above the charts (pitcher's or batter's hand, count, velocity band) scopes every chart; a 타자로/투수로 switch appears for players with both, defaulting to the role with more charted pitches.
+- **간단히/자세히**: simple shows percentile bars and the spray chart; detailed adds the zone and velocity charts and all tables. Players with no detailed games in the season open on detailed (tables), with a note. The season picker moved to the page header and scopes everything.
+- Every chart card has a **사용법** guide (`site/src/i18n/guides.ko.ts`) and a **표로 보기** table view; marks have hover and keyboard-focus tooltips. Colors are tokens in `styles.css` with dark-mode steps; the hit/out/other trio passed the dataviz palette validator against the site's light (#ffffff) and dark (#1c1c22) surfaces (the light aqua is below 3:1 contrast, so the legend and table view carry it).
+- **Synthetic season** (`python pipeline/synth.py` -> `data/synthetic/`, gitignored): 6 games, 4 fake teams, every field filled, passes the validator. Used to develop and screenshot the charts (`python pipeline/export_json.py --raw data/synthetic`, then `npm run dev`; re-export without `--raw` to go back to real data). Never deployed.
+- Tests: 23 pipeline (percentile ranks added), 160 frontend (chart helpers, simple/detailed views, filters, area-mode fallback, no-detailed-data fallback).
+- Not built: the first-visit walkthrough on the player page (section 7b), and the auto-generated scouting summary (M6).
+
+**Next: M5** (section 9): shrinkage and credible intervals, multi-season pooling, low-sample badges. The open items above (season names, Korean review, display names) still apply.
 
 ---
 

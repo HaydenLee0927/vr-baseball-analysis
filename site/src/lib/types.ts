@@ -1,5 +1,7 @@
 // Shapes of the JSON files written by pipeline/export_json.py.
 
+import type { PitchRec } from './charts';
+
 export type Hand = 'L' | 'R' | 'S' | null;
 export type Role = 'batting' | 'pitching';
 /** A stat line: counts and rates keyed by stat id (see pipeline/build_stats.py). */
@@ -26,12 +28,20 @@ export interface Split extends Line {
   key: string;
 }
 
+/** Percentile ranks among qualified players of the season (detailed games only). */
+export interface Percentiles {
+  pool: number;
+  qualified: boolean;
+  stats: { key: string; value: number | null; den: number | null; pct: number | null }[];
+}
+
 export interface SeasonLine {
   season: string;
   team_ids: string[];
   batting: Line | null;
   pitching: Line | null;
   splits: { batting: Split[]; pitching: Split[] };
+  percentiles: { batting: Percentiles | null; pitching: Percentiles | null };
 }
 
 export interface GameRef {
@@ -50,6 +60,8 @@ export interface PlayerFile {
   player: Person;
   seasons: SeasonLine[];
   game_log: { batting: GameLogRow[]; pitching: GameLogRow[] };
+  /** Pitch-level rows from detailed games only, for the charts. */
+  pitches: { as_batter: PitchRec[]; as_pitcher: PitchRec[] };
 }
 
 export interface Team {
@@ -63,6 +75,8 @@ export interface GameSummary extends GameRef {
   away_team_id: string;
   chart_status: 'partial' | 'complete';
   pitches: number;
+  /** Charted in the charting tool (all fields), as opposed to a legacy import. */
+  detailed: boolean;
   home_score?: number;
   away_score?: number;
   innings?: number;

@@ -62,12 +62,50 @@ describe('pages', () => {
   });
 
   it('player page shows season lines, splits and game log', async () => {
-    at('/player/h-p');
+    at('/player/h-p?view=detailed');
     expect(await screen.findByRole('heading', { name: 'VR_h-p' })).toBeTruthy();
     expect(screen.getByRole('heading', { level: 2, name: '투구 기록' })).toBeTruthy();
     expect(screen.getByText('상대 타자 4명')).toBeTruthy();
     expect(screen.getAllByText('타자 유리 카운트').length).toBeGreaterThan(0);
     expect(screen.getByRole('heading', { name: /경기별 기록/ })).toBeTruthy();
+  });
+
+  it('player page opens on the simple view with charts; detailed adds the zone chart and tables', async () => {
+    at('/player/h-p');
+    await screen.findByRole('heading', { name: 'VR_h-p' });
+    expect(screen.getByRole('heading', { name: '백분위' })).toBeTruthy();
+    expect(screen.getByText(/비교할 선수가 아직 부족합니다/)).toBeTruthy(); // one inning: no percentile pool
+    expect(screen.getByRole('heading', { name: '타구 방향' })).toBeTruthy();
+    expect(screen.queryByRole('heading', { name: '존 차트' })).toBeNull();
+    expect(screen.queryByRole('heading', { level: 2, name: '투구 기록' })).toBeNull();
+    fireEvent.click(screen.getByRole('button', { name: '자세히' }));
+    expect(await screen.findByRole('heading', { name: '존 차트' })).toBeTruthy();
+    expect(screen.getByRole('heading', { name: '구속' })).toBeTruthy();
+    expect(screen.getByRole('heading', { level: 2, name: '투구 기록' })).toBeTruthy();
+  });
+
+  it('chart filters narrow the pitches', async () => {
+    at('/player/h-p');
+    await screen.findByText('투구 11개');
+    fireEvent.change(screen.getByLabelText('볼카운트'), { target: { value: 'behind' } });
+    expect(screen.getByText('투구 2개')).toBeTruthy(); // the 0-1 foul and the 0-2 strikeout pitch
+  });
+
+  it('spray chart uses fielder areas when no landing spots were charted', async () => {
+    at('/player/v-a');
+    await screen.findByRole('heading', { name: 'VR_v-a' });
+    expect(screen.getByText(/착지 위치가 기록된 타구가 없어/)).toBeTruthy();
+    expect(screen.getByRole('button', { name: '점' }).hasAttribute('disabled')).toBe(true);
+  });
+
+  it('a player without detailed games opens on the tables', async () => {
+    const file = (fixture as unknown as Record<string, { pitches: { as_batter: unknown[]; as_pitcher: unknown[] } }>)['player/h-b.json'];
+    const saved = file.pitches;
+    file.pitches = { as_batter: [], as_pitcher: [] };
+    at('/player/h-b');
+    expect(await screen.findByText(/그래프에 쓸 상세 기록/)).toBeTruthy();
+    expect(screen.getByRole('heading', { level: 2, name: '타격 기록' })).toBeTruthy();
+    file.pitches = saved;
   });
 
   it('unknown player shows not found', async () => {
@@ -76,7 +114,7 @@ describe('pages', () => {
   });
 
   it('stat help opens on tap with the league average and closes on Escape', async () => {
-    at('/player/v-a');
+    at('/player/v-a?view=detailed');
     await screen.findByRole('heading', { name: 'VR_v-a' });
     fireEvent.click(screen.getAllByRole('button', { name: '타율 (AVG) 설명' })[0]);
     const pop = await screen.findByRole('dialog', { name: '타율 (AVG)' });

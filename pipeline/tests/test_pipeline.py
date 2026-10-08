@@ -121,6 +121,26 @@ class StatsTest(unittest.TestCase):
         self.assertEqual(self.out["games.json"][0]["innings"], 1)
 
 
+class PercentileTest(unittest.TestCase):
+    def lines(self, values):
+        return {f"p{i}": {"pa": 20, "ops": v, "k_pct": v, "bb_pct": v, "whiff_pct": v, "chase_pct": v, "hard_pct": v} for i, v in enumerate(values)}
+
+    def test_ranks_among_qualified_players(self):
+        from build_stats import percentile_ranks
+        lines = self.lines([0.1, 0.2, 0.3, 0.4, 0.5])
+        lines["small"] = {"pa": 3, "ops": 9.9, "k_pct": 0.0}  # not qualified: value shown, no rank, not in the pool
+        ranks = percentile_ranks(lines, "batting")
+        ops = {pid: next(s["pct"] for s in r["stats"] if s["key"] == "ops") for pid, r in ranks.items()}
+        self.assertEqual(ops, {"p0": 0, "p1": 25, "p2": 50, "p3": 75, "p4": 100, "small": None})
+        k = {pid: next(s["pct"] for s in r["stats"] if s["key"] == "k_pct") for pid, r in ranks.items() if pid != "small"}
+        self.assertEqual(k["p0"], 100)  # lowest strikeout rate is best
+        self.assertEqual((ranks["p0"]["pool"], ranks["small"]["qualified"]), (5, False))
+
+    def test_no_percentiles_below_minimum_pool(self):
+        from build_stats import percentile_ranks
+        self.assertEqual(percentile_ranks(self.lines([0.1, 0.2, 0.3, 0.4]), "batting"), {})
+
+
 class ValidateTest(unittest.TestCase):
     def errors(self, rows=None, **game):
         return validate(load_fixture(rows, **game))

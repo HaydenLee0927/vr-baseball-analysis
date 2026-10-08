@@ -19,3 +19,10 @@ Terms Claude Code was unsure about while writing the scouting site's Korean text
 | Header | 양투 / 우투좌타 | switch pitcher / throws right, bats left | 양투 is unusual in real baseball; VR players switch hands. |
 | Home | 일부만 기록 | game only partly charted | Maybe 기록 진행 중 or 부분 기록. |
 | Help popover | 무엇인가요? / 어떻게 보나요? / 기준 / 스카우팅 활용 | the four help sections | Tone check. |
+| Charts | 백분위 | percentile | Savant uses "Percentile Rankings"; 백분위 순위 may read better. |
+| Charts | 타구 방향 / 점 / 구역 | spray chart; point and area modes | 스프레이 차트 is also common. |
+| Charts | 존 차트, 보기 기준, 투구 비율 | zone chart, metric, pitch share | |
+| Charts | 표본 부족 | below the sample needed for a percentile | |
+| Charts | 타자로 / 투수로 | view as hitter / as pitcher | |
+| Charts | 사용법, 표로 보기 | how to read, table view | |
+| View | 간단히 / 자세히 | simple / detailed | From the handoff; listed to confirm. |

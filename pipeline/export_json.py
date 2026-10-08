@@ -19,6 +19,7 @@ from build_stats import (
     batting_line,
     final_score,
     hands_used,
+    percentile_ranks,
     pitch_frame,
     pitching_game_line,
     pitching_line,
@@ -42,6 +43,7 @@ PITCH_FIELDS = [
     "game_id", "inning", "half", "pa_id", "balls", "strikes", "outs", "pitcher_hand", "batter_side",
     "velo", "pitch_type", "pitch_type_source", "zone", "result", "bb_type", "fielder_pos",
     "field_x", "field_y", "contact_quality", "pa_result", "vod_ts",
+    "pitch_id", "p_hand", "b_side",  # hands with the player's default filled in
 ]
 
 
@@ -95,6 +97,16 @@ def build_outputs(data: RawData) -> dict[str, object]:
     keys = {(r["season"], r["player_id"]) for r in data.rosters}
     if not df.empty:
         keys |= set(zip(pas.season, pas.batter_id)) | set(zip(df.season, df.pitcher_id))
+    # Percentile ranks per season, from detailed games only.
+    ranks: dict[tuple[str, str, str], dict] = {}  # (season, player_id, role)
+    if not df.empty:
+        for season, rows in df[df.detailed].groupby("season"):
+            bat = {pid: batting_line(r[r.pa_result.notna()], r[r.result.notna()]) for pid, r in rows.groupby("batter_id") if r.pa_result.notna().any()}
+            pit = {pid: pitching_line(r) for pid, r in rows.groupby("pitcher_id")}
+            for role, lines in (("batting", bat), ("pitching", pit)):
+                for pid, rank in percentile_ranks(lines, role).items():
+                    ranks[(season, pid, role)] = rank
+
     index_rows = []
     per_player: dict[str, list] = defaultdict(list)
     for season, pid in sorted(keys):
@@ -109,6 +121,7 @@ def build_outputs(data: RawData) -> dict[str, object]:
                 "batting": splits(at_bat, "batting") if batting else [],
                 "pitching": splits(on_mound, "pitching") if pitching else [],
             },
+            "percentiles": {role: ranks.get((season, pid, role)) for role in ("batting", "pitching")},
         }
         per_player[pid].append(line)
         index_rows.append(
@@ -126,8 +139,9 @@ def build_outputs(data: RawData) -> dict[str, object]:
                 bat_log.append(game_ref(game_id) | {"opponent": rows.fld_team.iloc[0]} | batting_game_line(rows))
             for game_id, rows in df[df.pitcher_id == pid].groupby("game_id", sort=False):
                 pit_log.append(game_ref(game_id) | {"opponent": rows.bat_team.iloc[0]} | pitching_game_line(rows))
-            as_batter = pitch_rows[pitch_rows.batter_id == pid]
-            as_pitcher = pitch_rows[pitch_rows.pitcher_id == pid]
+            # Pitch-level rows feed the charts, which use detailed games only.
+            as_batter = pitch_rows[(pitch_rows.batter_id == pid) & pitch_rows.detailed]
+            as_pitcher = pitch_rows[(pitch_rows.pitcher_id == pid) & pitch_rows.detailed]
         files[f"player/{players[pid]['slug']}.json"] = {
             "player": person(pid),
             "seasons": seasons,
@@ -155,6 +169,7 @@ def build_outputs(data: RawData) -> dict[str, object]:
             "home_team_id": g["home_team_id"], "away_team_id": g["away_team_id"],
             "chart_status": g["chart_status"], "charted_by": g["charted_by"], "vod_url": g["vod_url"],
             "pitches": int(rows.result.notna().sum()) if len(rows) else 0,
+            "detailed": g["charted_by"] != "legacy",
         }
         if len(rows):
             home, away = final_score(rows)

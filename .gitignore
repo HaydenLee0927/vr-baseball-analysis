@@ -9,3 +9,6 @@ __pycache__/
 
 # Private data repo (vr-baseball-data) is cloned here; never commit it to the public repo
 data/raw/
+
+# Synthetic demo data from pipeline/synth.py (never committed or deployed)
+data/synthetic/

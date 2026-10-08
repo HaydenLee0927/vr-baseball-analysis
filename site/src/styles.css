@@ -7,6 +7,15 @@
   --accent: #1f5fbf;
   --accent-text: #ffffff;
   --error: #b42318;
+  /* Chart tokens (validated with the dataviz palette checker against these surfaces). */
+  --viz-hit: #eb6834;
+  --viz-out: #2a78d6;
+  --viz-other: #1baf7a;
+  --viz-field: #f0efec;
+  --viz-line: #c3c2b7;
+  --viz-grid: #e1e0d9;
+  --viz-tick: #898781;
+  --viz-bar: #2a78d6;
   color-scheme: light;
 }
 
@@ -20,6 +29,14 @@
     --accent: #6ea2ff;
     --accent-text: #0d1424;
     --error: #ff7b6e;
+    --viz-hit: #d95926;
+    --viz-out: #3987e5;
+    --viz-other: #199e70;
+    --viz-field: #26262d;
+    --viz-line: #4a4a52;
+    --viz-grid: #2c2c34;
+    --viz-tick: #898781;
+    --viz-bar: #3987e5;
     color-scheme: dark;
   }
 }
@@ -508,4 +525,396 @@ dl.glossary p {
   .topbar .search {
     flex-basis: 100%;
   }
+}
+
+/* Player page controls */
+.seg {
+  display: inline-flex;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.seg button {
+  min-height: 36px;
+  border-radius: 0;
+  background: var(--surface);
+  color: var(--text);
+  font-weight: 500;
+  padding: 0 0.9rem;
+}
+
+.seg button.on {
+  background: var(--accent);
+  color: var(--accent-text);
+}
+
+.seg button:disabled {
+  color: var(--muted);
+}
+
+label.inline {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.player-head .row {
+  margin-top: 0.75rem;
+}
+
+/* Charts */
+.chart-grid {
+  display: grid;
+  align-items: start;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 420px), 1fr));
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+.chart-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 1rem;
+  min-width: 0;
+}
+
+.chart-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.chart-head h3 {
+  margin: 0;
+  color: var(--text);
+  font-size: 1rem;
+}
+
+.chart-card h4 {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--muted);
+  margin: 0.75rem 0 0.25rem;
+}
+
+button.guide-btn {
+  min-height: 32px;
+  padding: 0 0.7rem;
+  font-size: 0.8rem;
+  font-weight: 500;
+  background: var(--bg);
+  color: var(--text);
+  border: 1px solid var(--border);
+}
+
+.chart-controls {
+  margin: 0.6rem 0;
+}
+
+.viz {
+  position: relative;
+}
+
+.viz svg {
+  display: block;
+  width: 100%;
+  height: auto;
+  overflow: visible;
+}
+
+.viz.small-chart svg {
+  max-width: 440px;
+}
+
+.pctl-track.empty::before,
+.pctl-track.empty::after {
+  display: none;
+}
+
+.viz.zone svg {
+  max-width: 300px;
+  margin: 0 auto;
+}
+
+.viz [tabindex]:focus {
+  outline: none;
+}
+
+.viz [tabindex]:focus-visible > :last-child,
+.viz polygon[tabindex]:focus-visible {
+  stroke: var(--text);
+  stroke-width: 2;
+}
+
+.viz-fair {
+  fill: var(--viz-field);
+  stroke: var(--viz-line);
+  stroke-width: 1;
+}
+
+.viz-area,
+.viz-cell {
+  stroke: var(--surface);
+  stroke-width: 2;
+  cursor: pointer;
+}
+
+.viz-area:hover,
+.viz-cell:hover,
+g:hover > .viz-cell {
+  opacity: 0.85;
+}
+
+.viz-diamond {
+  fill: none;
+  stroke: var(--viz-line);
+  stroke-width: 1;
+}
+
+.viz-line {
+  fill: none;
+  stroke: var(--viz-line);
+  stroke-width: 1;
+}
+
+.viz-zone-edge {
+  fill: none;
+  stroke: var(--text);
+  stroke-width: 1.5;
+  pointer-events: none;
+}
+
+.viz-label {
+  font-size: 13px;
+  font-weight: 600;
+  text-anchor: middle;
+  dominant-baseline: central;
+  pointer-events: none;
+}
+
+.viz-dot {
+  stroke: var(--surface);
+  stroke-width: 2;
+}
+
+.viz-dot-hit {
+  cursor: pointer;
+}
+
+.viz-hit {
+  fill: var(--viz-hit);
+  background: var(--viz-hit);
+}
+
+.viz-out {
+  fill: var(--viz-out);
+  background: var(--viz-out);
+}
+
+.viz-other {
+  fill: var(--viz-other);
+  background: var(--viz-other);
+}
+
+.viz-grid {
+  stroke: var(--viz-grid);
+  stroke-width: 1;
+}
+
+.viz-axis {
+  stroke: var(--viz-line);
+  stroke-width: 1;
+}
+
+.viz-tick {
+  font-size: 11px;
+  fill: var(--viz-tick);
+  dominant-baseline: central;
+}
+
+.viz-value {
+  font-size: 11px;
+  font-weight: 600;
+  fill: var(--text);
+}
+
+.viz-bar {
+  fill: var(--viz-bar);
+}
+
+.viz-trend {
+  fill: none;
+  stroke: var(--viz-bar);
+  stroke-width: 2;
+  stroke-linejoin: round;
+  stroke-linecap: round;
+}
+
+.viz-point {
+  fill: var(--viz-bar);
+  stroke: var(--surface);
+  stroke-width: 2;
+}
+
+.viz-tip {
+  position: absolute;
+  z-index: 5;
+  transform: translate(-50%, calc(-100% - 8px));
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+  padding: 0.4rem 0.6rem;
+  font-size: 0.8rem;
+  white-space: nowrap;
+  pointer-events: none;
+  background: var(--surface);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  box-shadow: 0 4px 14px rgb(0 0 0 / 0.15);
+}
+
+.viz-tip span {
+  color: var(--muted);
+}
+
+.legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem 1rem;
+  list-style: none;
+  padding: 0;
+  margin: 0.5rem 0 0;
+  font-size: 0.85rem;
+}
+
+.legend li {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.swatch {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  display: inline-block;
+}
+
+.table-view {
+  margin-top: 0.75rem;
+  font-size: 0.85rem;
+}
+
+.table-view summary {
+  cursor: pointer;
+  color: var(--muted);
+  min-height: 32px;
+  display: flex;
+  align-items: center;
+}
+
+/* Percentile bars */
+ul.pctl {
+  list-style: none;
+  padding: 0;
+  margin: 0.5rem 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.7rem;
+}
+
+ul.pctl li {
+  display: grid;
+  grid-template-columns: 7.5rem 1fr 4.5rem;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.pctl-name {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.2rem;
+  font-size: 0.85rem;
+}
+
+.pctl-track {
+  position: relative;
+  margin: 0 14px; /* room for a dot at 0 or 100 */
+  height: 24px;
+  display: flex;
+  align-items: center;
+}
+
+.pctl-track::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: var(--viz-grid);
+}
+
+.pctl-track::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  width: 1px;
+  height: 10px;
+  background: var(--viz-line);
+}
+
+.pctl-fill {
+  position: absolute;
+  left: 0;
+  height: 6px;
+  border-radius: 0 4px 4px 0;
+  opacity: 0.85;
+}
+
+.pctl-dot {
+  position: absolute;
+  z-index: 1;
+  transform: translateX(-50%);
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  border: 2px solid var(--surface);
+  display: grid;
+  place-items: center;
+  font-size: 0.72rem;
+  font-weight: 700;
+}
+
+.pctl-value {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  font-size: 0.85rem;
+}
+
+.guide ul {
+  padding-left: 1.2rem;
+}
+
+.guide .questions li::marker {
+  content: '? ';
+}
+
+.modal {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  display: grid;
+  place-items: center;
+  padding: 1rem;
+  background: rgb(0 0 0 / 0.45);
+}
+
+.modal .card {
+  max-width: 480px;
+  max-height: 85vh;
+  overflow: auto;
 }

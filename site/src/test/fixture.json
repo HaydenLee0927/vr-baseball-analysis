@@ -408,6 +408,10 @@
       }
      ],
      "pitching": []
+    },
+    "percentiles": {
+     "batting": null,
+     "pitching": null
     }
    }
   ],
@@ -459,6 +463,9 @@
      "contact_quality": null,
      "pa_result": "1B",
      "vod_ts": null,
+     "pitch_id": 12,
+     "p_hand": null,
+     "b_side": null,
      "pitcher_id": "v-p"
     }
    ],
@@ -576,6 +583,10 @@
       }
      ],
      "pitching": []
+    },
+    "percentiles": {
+     "batting": null,
+     "pitching": null
     }
    }
   ],
@@ -627,6 +638,9 @@
      "contact_quality": null,
      "pa_result": "HBP",
      "vod_ts": null,
+     "pitch_id": 13,
+     "p_hand": null,
+     "b_side": null,
      "pitcher_id": "v-p"
     }
    ],
@@ -766,6 +780,10 @@
       }
      ],
      "pitching": []
+    },
+    "percentiles": {
+     "batting": null,
+     "pitching": null
     }
    }
   ],
@@ -817,6 +835,9 @@
      "contact_quality": "hard",
      "pa_result": "2B",
      "vod_ts": null,
+     "pitch_id": 14,
+     "p_hand": null,
+     "b_side": null,
      "pitcher_id": "v-p"
     }
    ],
@@ -876,6 +897,8 @@
      "zone_pct": 0.3636,
      "first_pitches": 4,
      "first_pitch_strike_pct": 0.5,
+     "chase_pitches": 7,
+     "chase_pct": 0.2857,
      "bb_typed": 2,
      "gb_pct": 0.5,
      "contact_rated": 1,
@@ -973,6 +996,10 @@
        "chase_pct": 1.0
       }
      ]
+    },
+    "percentiles": {
+     "batting": null,
+     "pitching": null
     }
    }
   ],
@@ -1023,6 +1050,9 @@
      "contact_quality": null,
      "pa_result": null,
      "vod_ts": null,
+     "pitch_id": 1,
+     "p_hand": null,
+     "b_side": null,
      "batter_id": "v-a"
     },
     {
@@ -1047,6 +1077,9 @@
      "contact_quality": null,
      "pa_result": null,
      "vod_ts": null,
+     "pitch_id": 2,
+     "p_hand": null,
+     "b_side": null,
      "batter_id": "v-a"
     },
     {
@@ -1071,6 +1104,9 @@
      "contact_quality": "hard",
      "pa_result": "HR",
      "vod_ts": null,
+     "pitch_id": 3,
+     "p_hand": null,
+     "b_side": null,
      "batter_id": "v-a"
     },
     {
@@ -1095,6 +1131,9 @@
      "contact_quality": null,
      "pa_result": null,
      "vod_ts": null,
+     "pitch_id": 4,
+     "p_hand": null,
+     "b_side": null,
      "batter_id": "v-b"
     },
     {
@@ -1119,6 +1158,9 @@
      "contact_quality": null,
      "pa_result": null,
      "vod_ts": null,
+     "pitch_id": 5,
+     "p_hand": null,
+     "b_side": null,
      "batter_id": "v-b"
     },
     {
@@ -1143,6 +1185,9 @@
      "contact_quality": null,
      "pa_result": null,
      "vod_ts": null,
+     "pitch_id": 6,
+     "p_hand": null,
+     "b_side": null,
      "batter_id": "v-b"
     },
     {
@@ -1167,6 +1212,9 @@
      "contact_quality": null,
      "pa_result": "BB",
      "vod_ts": null,
+     "pitch_id": 7,
+     "p_hand": null,
+     "b_side": null,
      "batter_id": "v-b"
     },
     {
@@ -1191,6 +1239,9 @@
      "contact_quality": null,
      "pa_result": null,
      "vod_ts": null,
+     "pitch_id": 8,
+     "p_hand": null,
+     "b_side": null,
      "batter_id": "v-c"
     },
     {
@@ -1215,6 +1266,9 @@
      "contact_quality": null,
      "pa_result": null,
      "vod_ts": null,
+     "pitch_id": 9,
+     "p_hand": null,
+     "b_side": null,
      "batter_id": "v-c"
     },
     {
@@ -1239,6 +1293,9 @@
      "contact_quality": null,
      "pa_result": "K",
      "vod_ts": null,
+     "pitch_id": 10,
+     "p_hand": null,
+     "b_side": null,
      "batter_id": "v-c"
     },
     {
@@ -1263,6 +1320,9 @@
      "contact_quality": null,
      "pa_result": "DP",
      "vod_ts": null,
+     "pitch_id": 11,
+     "p_hand": null,
+     "b_side": null,
      "batter_id": "v-d"
     }
    ]
@@ -1401,6 +1461,10 @@
       }
      ],
      "pitching": []
+    },
+    "percentiles": {
+     "batting": null,
+     "pitching": null
     }
    }
   ],
@@ -1452,6 +1516,9 @@
      "contact_quality": null,
      "pa_result": null,
      "vod_ts": null,
+     "pitch_id": 1,
+     "p_hand": null,
+     "b_side": null,
      "pitcher_id": "h-p"
     },
     {
@@ -1476,6 +1543,9 @@
      "contact_quality": null,
      "pa_result": null,
      "vod_ts": null,
+     "pitch_id": 2,
+     "p_hand": null,
+     "b_side": null,
      "pitcher_id": "h-p"
     },
     {
@@ -1500,6 +1570,9 @@
      "contact_quality": "hard",
      "pa_result": "HR",
      "vod_ts": null,
+     "pitch_id": 3,
+     "p_hand": null,
+     "b_side": null,
      "pitcher_id": "h-p"
     }
    ],
@@ -1639,6 +1712,10 @@
       }
      ],
      "pitching": []
+    },
+    "percentiles": {
+     "batting": null,
+     "pitching": null
     }
    }
   ],
@@ -1690,6 +1767,9 @@
      "contact_quality": null,
      "pa_result": null,
      "vod_ts": null,
+     "pitch_id": 4,
+     "p_hand": null,
+     "b_side": null,
      "pitcher_id": "h-p"
     },
     {
@@ -1714,6 +1794,9 @@
      "contact_quality": null,
      "pa_result": null,
      "vod_ts": null,
+     "pitch_id": 5,
+     "p_hand": null,
+     "b_side": null,
      "pitcher_id": "h-p"
     },
     {
@@ -1738,6 +1821,9 @@
      "contact_quality": null,
      "pa_result": null,
      "vod_ts": null,
+     "pitch_id": 6,
+     "p_hand": null,
+     "b_side": null,
      "pitcher_id": "h-p"
     },
     {
@@ -1762,6 +1848,9 @@
      "contact_quality": null,
      "pa_result": "BB",
      "vod_ts": null,
+     "pitch_id": 7,
+     "p_hand": null,
+     "b_side": null,
      "pitcher_id": "h-p"
     }
    ],
@@ -1945,6 +2034,10 @@
       }
      ],
      "pitching": []
+    },
+    "percentiles": {
+     "batting": null,
+     "pitching": null
     }
    }
   ],
@@ -1996,6 +2089,9 @@
      "contact_quality": null,
      "pa_result": null,
      "vod_ts": null,
+     "pitch_id": 8,
+     "p_hand": null,
+     "b_side": null,
      "pitcher_id": "h-p"
     },
     {
@@ -2020,6 +2116,9 @@
      "contact_quality": null,
      "pa_result": null,
      "vod_ts": null,
+     "pitch_id": 9,
+     "p_hand": null,
+     "b_side": null,
      "pitcher_id": "h-p"
     },
     {
@@ -2044,6 +2143,9 @@
      "contact_quality": null,
      "pa_result": "K",
      "vod_ts": null,
+     "pitch_id": 10,
+     "p_hand": null,
+     "b_side": null,
      "pitcher_id": "h-p"
     }
    ],
@@ -2161,6 +2263,10 @@
       }
      ],
      "pitching": []
+    },
+    "percentiles": {
+     "batting": null,
+     "pitching": null
     }
    }
   ],
@@ -2212,6 +2318,9 @@
      "contact_quality": null,
      "pa_result": "DP",
      "vod_ts": null,
+     "pitch_id": 11,
+     "p_hand": null,
+     "b_side": null,
      "pitcher_id": "h-p"
     }
    ],
@@ -2271,6 +2380,8 @@
      "zone_pct": 0.6667,
      "first_pitches": 3,
      "first_pitch_strike_pct": 0.6667,
+     "chase_pitches": 1,
+     "chase_pct": 0.0,
      "bb_typed": 2,
      "gb_pct": 0.0,
      "contact_rated": 1,
@@ -2324,6 +2435,10 @@
        "chase_pct": null
       }
      ]
+    },
+    "percentiles": {
+     "batting": null,
+     "pitching": null
     }
    }
   ],
@@ -2374,6 +2489,9 @@
      "contact_quality": null,
      "pa_result": "1B",
      "vod_ts": null,
+     "pitch_id": 12,
+     "p_hand": null,
+     "b_side": null,
      "batter_id": "h-a"
     },
     {
@@ -2398,6 +2516,9 @@
      "contact_quality": null,
      "pa_result": "HBP",
      "vod_ts": null,
+     "pitch_id": 13,
+     "p_hand": null,
+     "b_side": null,
      "batter_id": "h-b"
     },
     {
@@ -2422,6 +2543,9 @@
      "contact_quality": "hard",
      "pa_result": "2B",
      "vod_ts": null,
+     "pitch_id": 14,
+     "p_hand": null,
+     "b_side": null,
      "batter_id": "h-c"
     }
    ]
@@ -2466,6 +2590,7 @@
    "charted_by": null,
    "vod_url": null,
    "pitches": 14,
+   "detailed": true,
    "home_score": 2,
    "away_score": 1,
    "innings": 1
@@ -2609,6 +2734,7 @@
    "charted_by": null,
    "vod_url": null,
    "pitches": 14,
+   "detailed": true,
    "home_score": 2,
    "away_score": 1,
    "innings": 1
@@ -2700,6 +2826,8 @@
      "zone_pct": 0.4286,
      "first_pitches": 7,
      "first_pitch_strike_pct": 0.5714,
+     "chase_pitches": 8,
+     "chase_pct": 0.25,
      "bb_typed": 4,
      "gb_pct": 0.25,
      "contact_rated": 2,

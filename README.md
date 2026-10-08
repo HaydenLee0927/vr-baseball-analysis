@@ -21,6 +21,13 @@ cd site && npm run build && npm run preview
 
 Run `python pipeline/export_json.py` again afterwards to get plain data back for `npm run dev`.
 
+To work on the charts with plenty of data, generate a fake season (it stays local and is never deployed):
+
+```sh
+python pipeline/synth.py
+python pipeline/export_json.py --raw data/synthetic   # run without --raw afterwards to go back to real data
+```
+
 ## Charting a game
 
 ```sh

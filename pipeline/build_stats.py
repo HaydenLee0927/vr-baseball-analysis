@@ -35,6 +35,9 @@ def pitch_frame(data: RawData) -> pd.DataFrame:
         df[col] = pd.to_numeric(df[col])  # all-blank columns would otherwise stay as object dtype
     games = pd.DataFrame(data.games).set_index("game_id")
     df["season"] = df.game_id.map(games.season)
+    # Games charted in the charting tool have every field; legacy imports do not, so charts and
+    # percentiles (M4) use only these "detailed" games.
+    df["detailed"] = df.game_id.map(games.charted_by) != "legacy"
     home = df.game_id.map(games.home_team_id)
     away = df.game_id.map(games.away_team_id)
     top = df.half == "top"
@@ -149,6 +152,7 @@ def pitching_line(rows: pd.DataFrame) -> dict:
         "csw_pct": rate(called + b["whiffs"], b["pitches"]),
         "zone_charted": len(zoned), "zone_pct": rate(zoned.in_zone.sum(), len(zoned)),
         "first_pitches": len(first), "first_pitch_strike_pct": rate(first.result.isin(STRIKES).sum(), len(first)),
+        "chase_pitches": b["chase_pitches"], "chase_pct": b["chase_pct"],
         "bb_typed": b["bb_typed"], "gb_pct": b["gb_pct"], "contact_rated": b["contact_rated"], "hard_pct": b["hard_pct"],
     }
 
@@ -211,6 +215,47 @@ def hands_used(sides: pd.Series) -> str | None:
     """'L', 'R', 'S' (used both) or None, from the hands recorded on the player's pitches."""
     used = set(sides.dropna())
     return "S" if used >= {"L", "R"} else used.pop() if used else None
+
+
+# Percentile bars: (stat, lower is better, sample-size field). Ranked among qualified players
+# of the same season, using detailed games only.
+PERCENTILE_STATS = {
+    "batting": [
+        ("ops", False, "pa"), ("k_pct", True, "pa"), ("bb_pct", False, "pa"),
+        ("whiff_pct", True, "swings"), ("chase_pct", True, "chase_pitches"), ("hard_pct", False, "contact_rated"),
+    ],
+    "pitching": [
+        ("k_pct", False, "bf"), ("bb_pct", True, "bf"), ("whiff_pct", False, "swings"), ("csw_pct", False, "pitches"),
+        ("chase_pct", False, "chase_pitches"), ("velo_avg", False, "velo_n"), ("hard_pct", True, "contact_rated"),
+    ],
+}
+QUALIFY = {"batting": ("pa", 10), "pitching": ("bf", 15)}
+MIN_POOL = 5  # fewer qualified players than this and no percentiles are shown for the season
+
+
+def percentile_ranks(lines: dict[str, dict], role: str) -> dict[str, dict]:
+    """Percentile (0-100, higher = better) of each player among qualified players, per stat.
+
+    Returns {player_id: {"pool", "qualified", "stats": [{key, value, den, pct}]}}, or {} when the
+    season has fewer than MIN_POOL qualified players. Unqualified players get values but no pct."""
+    field, minimum = QUALIFY[role]
+    qualified = {pid for pid, line in lines.items() if (line.get(field) or 0) >= minimum}
+    if len(qualified) < MIN_POOL:
+        return {}
+    out = {}
+    for pid, line in lines.items():
+        stats = []
+        for key, lower_better, den in PERCENTILE_STATS[role]:
+            value = line.get(key)
+            pct = None
+            others = [lines[q][key] for q in qualified if q != pid and lines[q].get(key) is not None]
+            if pid in qualified and value is not None and others:
+                worse = sum(o > value if lower_better else o < value for o in others)
+                ties = sum(o == value for o in others)
+                pct = round(100 * (worse + ties / 2) / len(others))
+            stats.append({"key": key, "value": value, "den": line.get(den), "pct": pct})
+        out[pid] = {"pool": len(qualified), "qualified": pid in qualified, "stats": stats}
+    return out
 
 
 def final_score(rows: pd.DataFrame) -> tuple[int, int]:
