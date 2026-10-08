@@ -7,7 +7,7 @@ export type Half = 'top' | 'bot';
 export type Hand = 'L' | 'R';
 export type Side = 'home' | 'away';
 export type Result = 'ball' | 'called_strike' | 'swinging_strike' | 'foul' | 'foul_tip' | 'in_play' | 'hbp';
-export type GameEvent = 'SB' | 'CS' | 'WP' | 'PB' | 'pickoff' | 'sub';
+export type GameEvent = 'SB' | 'CS' | 'WP' | 'PB' | 'BK' | 'pickoff' | 'sub';
 export type PaResult = '1B' | '2B' | '3B' | 'HR' | 'BB' | 'K' | 'HBP' | 'out' | 'FC' | 'E' | 'SF' | 'SH' | 'DP';
 export type BbType = 'ground' | 'line' | 'fly' | 'popup' | 'bunt';
 export type Contact = 'weak' | 'medium' | 'hard';
@@ -259,6 +259,27 @@ function leadRunner(bases: Bases): number {
   return -1;
 }
 
+/**
+ * Put a player already in the game at a position (1 = pitcher, 2 = catcher, 3-9) on the fielding team.
+ * Whoever held that position takes the mover's old spot, so a pitcher and fielder trading places is one change.
+ * Updates both the state and the lineup, so the change lasts past the half-inning.
+ */
+export function movePlayer(lineup: Lineup, state: State, pos: number, id: string | null): { lineup: Lineup; state: State } {
+  const l: Lineup = { ...lineup, fielders: { ...lineup.fielders } };
+  const s: State = { ...state, fielders: { ...state.fielders } };
+  const at = (p: number) => (p === 1 ? s.pitcherId : p === 2 ? s.catcherId : s.fielders[p] ?? null);
+  const put = (p: number, v: string | null) => {
+    if (p === 1) l.pitcher = s.pitcherId = v;
+    else if (p === 2) l.catcher = s.catcherId = v;
+    else l.fielders[p] = s.fielders[p] = v;
+  };
+  const from = id ? [1, 2, ...FIELD_POSITIONS].find((p) => p !== pos && at(p) === id) : undefined;
+  const displaced = at(pos);
+  put(pos, id);
+  if (from !== undefined) put(from, displaced);
+  return { lineup: l, state: s };
+}
+
 /** Default effect of a row on runners, outs and runs. The charter corrects anything unusual. */
 export function playOutcome(row: PitchRow): { runners: Bases; outs: number; runs: number } {
   const bases: Bases = [row.runner_1, row.runner_2, row.runner_3];
@@ -281,6 +302,7 @@ export function playOutcome(row: PitchRow): { runners: Bases; outs: number; runs
         break;
       case 'WP':
       case 'PB':
+      case 'BK':
         runs += advanceAll(bases, 1);
         break;
     }

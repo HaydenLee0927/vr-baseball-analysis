@@ -9,8 +9,9 @@ import type { People } from './people';
 export function PlayerPicker(props: {
   people: People;
   placeholder: string;
-  onPick: (id: string) => void;
-  onNewPlayer: (p: NewPlayer) => void;
+  /** `added` is set when the name was just added as a new player. */
+  onPick: (id: string, added?: NewPlayer) => void;
+  onNewPlayer?: (p: NewPlayer) => void;
 }) {
   const [text, setText] = useState('');
   const listId = useRef(`names-${Math.random().toString(36).slice(2)}`).current;
@@ -19,13 +20,14 @@ export function PlayerPicker(props: {
     const name = text.trim();
     if (!name) return;
     let id = props.people.resolve(name);
+    let added: NewPlayer | undefined;
     if (!id) {
       if (!confirm(`"${name}" is not a known player.\n\nAdd as a new player with this exact VRChat name?`)) return;
-      const p = await props.people.newPlayer(name);
-      props.onNewPlayer(p);
-      id = p.player_id;
+      added = await props.people.newPlayer(name);
+      props.onNewPlayer?.(added);
+      id = added.player_id;
     }
-    props.onPick(id);
+    props.onPick(id, added);
     setText('');
   }
 

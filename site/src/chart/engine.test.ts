@@ -5,6 +5,7 @@ import {
   inferLineups,
   initialState,
   makeRow,
+  movePlayer,
   remember,
   resume,
   suggestPaResult,
@@ -109,6 +110,14 @@ describe('plate appearances and runners', () => {
     expect(state.awayScore).toBe(1);
     expect([state.outs, state.runners]).toEqual([1, [null, null, null]]);
   });
+
+  it('a balk moves every runner up and keeps the count', () => {
+    const balk: Entry = { kind: 'event', event: 'BK', vodTs: null, notes: null };
+    const { state } = play([pitch('in_play', '1B'), pitch('in_play', '3B'), pitch('ball'), balk]);
+    // a1 scores from third on the triple; a2 on third scores on the balk.
+    expect([state.awayScore, state.runners]).toEqual([2, [null, null, null]]);
+    expect([state.balls, state.strikes, state.batterId]).toEqual([1, 0, 'a3']);
+  });
 });
 
 describe('half-innings', () => {
@@ -119,6 +128,18 @@ describe('half-innings', () => {
     expect(state.next.away).toBe(3); // a1..a3 batted; index 3 wraps to a1
     const after = play([...groundout(), ...groundout(), ...groundout()], lineups(), state).state;
     expect([after.inning, after.half, after.batterId]).toEqual([2, 'top', 'a1']);
+  });
+
+  it('a fielder comes in to pitch and the pitcher takes his spot, lasting past the half-inning', () => {
+    const l = lineups();
+    const start = initialState(l, {}, {});
+    const swap = movePlayer(l.home, start, 1, 'h2'); // shortstop h2 pitches, hp goes to short
+    expect([swap.state.pitcherId, swap.state.fielders[6]]).toEqual(['h2', 'hp']);
+    expect([swap.lineup.pitcher, swap.lineup.fielders[6]]).toEqual(['h2', 'hp']);
+    const l2 = { ...l, home: swap.lineup };
+    const top = play([...groundout(), ...groundout(), ...groundout()], l2, swap.state).state;
+    const back = play([...groundout(), ...groundout(), ...groundout()], l2, top).state;
+    expect([back.half, back.pitcherId, back.fielders[6]]).toEqual(['top', 'h2', 'hp']);
   });
 
   it('every row records the defense, which changes with the half-inning', () => {

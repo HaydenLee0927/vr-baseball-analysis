@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { saveBody, saveGame, type Draft, type SaveResult, type ServerData } from './data';
+import { saveBody, saveGame, type Draft, type NewPlayer, type SaveResult, type ServerData } from './data';
 import {
   advance,
   battingSide,
@@ -9,6 +9,7 @@ import {
   fieldingSide,
   hand,
   makeRow,
+  movePlayer,
   POSITION_LABEL,
   remember,
   suggestPaResult,
@@ -39,8 +40,8 @@ const PA_RESULTS: PaResult[] = ['1B', '2B', '3B', 'HR', 'BB', 'K', 'HBP', 'out',
 const PA_LABEL: Record<string, string> = { DP: 'double play', FC: "fielder's choice", E: 'error', SF: 'sac fly', SH: 'sac bunt' };
 const BB_TYPES: BbType[] = ['ground', 'line', 'fly', 'popup', 'bunt'];
 const CONTACT: Contact[] = ['weak', 'medium', 'hard'];
-const EVENTS: GameEvent[] = ['SB', 'CS', 'WP', 'PB', 'pickoff'];
-const EVENT_LABEL: Record<string, string> = { SB: 'Stolen base', CS: 'Caught stealing', WP: 'Wild pitch', PB: 'Passed ball', pickoff: 'Pickoff' };
+const EVENTS: GameEvent[] = ['SB', 'CS', 'WP', 'PB', 'BK', 'pickoff'];
+const EVENT_LABEL: Record<string, string> = { SB: 'Stolen base', CS: 'Caught stealing', WP: 'Wild pitch', PB: 'Passed ball', BK: 'Balk', pickoff: 'Pickoff' };
 
 interface Form {
   velo: string;
@@ -181,14 +182,14 @@ export function Chart(props: {
   }
 
   /** Put `id` in for whoever holds `pos`; they also take that player's batting-order spot. */
-  function substitute(pos: number | 'batter', id: string) {
+  function substitute(pos: number | 'batter', id: string, added?: NewPlayer) {
     const side = pos === 'batter' ? bat : fld;
     const old = holder(pos);
     const label = pos === 'batter' ? 'PH' : POSITION_LABEL[pos];
     let { rows, before } = draft;
     if (state.batterId && state.pitcherId) {
       const row = makeRow(game.game_id, rows.length + 1, state, {
-        kind: 'event', event: 'sub', vodTs: clock.current(), notes: `sub ${label}: ${people.name(old)} -> ${people.name(id)}`,
+        kind: 'event', event: 'sub', vodTs: clock.current(), notes: `sub ${label}: ${people.name(old)} -> ${added?.vrchat_name ?? people.name(id)}`,
       });
       rows = [...rows, row];
       before = [...before, state];
@@ -218,16 +219,18 @@ export function Chart(props: {
     } else {
       l.fielders[pos] = s.fielders[pos] = id;
     }
-    update({ rows, before, lineups: { ...lineups, [side]: l }, state: s });
+    // One update: a separate newPlayers update would be overwritten by this one (both spread the same draft).
+    const newPlayers = added ? [...draft.newPlayers, added] : draft.newPlayers;
+    update({ rows, before, lineups: { ...lineups, [side]: l }, state: s, newPlayers });
     setSub(null);
   }
 
-  /** Move a player already in the game to another position (no new player, no event row). */
-  function setFielder(pos: number, id: string | null) {
-    const fielders = { ...state.fielders };
-    for (const p of FIELD_POSITIONS) if (id && fielders[p] === id) fielders[p] = null;
-    fielders[pos] = id;
-    update({ state: { ...state, fielders }, lineups: { ...lineups, [fld]: { ...lineups[fld], fielders } } });
+  /** Move a player already in the game to another position, swapping with its holder (no new player, no event row). */
+  function setPosition(pos: number, id: string | null) {
+    const moved = movePlayer(lineups[fld], state, pos, id);
+    const s = moved.state;
+    if (s.pitcherId !== state.pitcherId) s.pitcherHand = hand(s.pitcherId, 'throws', draft.memory, defaults);
+    update({ state: s, lineups: { ...lineups, [fld]: moved.lineup } });
   }
 
   async function save(force: boolean) {
@@ -373,17 +376,17 @@ export function Chart(props: {
             </span>
             <span>Pitcher</span>
             <span className="row">
-              <PlayerSelect people={people} value={state.pitcherId} options={teamPlayers(fld)} onChange={(id) => setState({ pitcherId: id, pitcherHand: hand(id, 'throws', draft.memory, defaults) })} />
+              <PlayerSelect people={people} value={state.pitcherId} options={teamPlayers(fld)} onChange={(id) => setPosition(1, id)} />
               {handPick(state.pitcherHand, (h) => setState({ pitcherHand: h }))}
             </span>
             <span>Catcher</span>
-            <PlayerSelect people={people} value={state.catcherId} options={teamPlayers(fld)} onChange={(id) => setState({ catcherId: id })} />
+            <PlayerSelect people={people} value={state.catcherId} options={teamPlayers(fld)} onChange={(id) => setPosition(2, id)} />
             <span>Defense</span>
             <span className="defense">
               {FIELD_POSITIONS.map((p) => (
                 <label key={p}>
                   {POSITION_LABEL[p]}
-                  <PlayerSelect people={people} value={state.fielders[p] ?? null} options={teamPlayers(fld)} onChange={(id) => setFielder(p, id)} />
+                  <PlayerSelect people={people} value={state.fielders[p] ?? null} options={teamPlayers(fld)} onChange={(id) => setPosition(p, id)} />
                 </label>
               ))}
             </span>
@@ -562,13 +565,12 @@ export function Chart(props: {
             )}
             <p className="muted small">
               Replacing {people.name(holder(sub)) || '—'} ({game[`${sub === 'batter' ? bat : fld}_team_id`]}). The new player also takes their batting-order spot.
-              To move players already in the game between positions, use the Defense selects instead.
+              To move players already in the game between positions (e.g. a fielder comes in to pitch), use the Pitcher, Catcher and Defense selects instead: they swap the two players.
             </p>
             <PlayerPicker
               people={people}
               placeholder="VRChat name"
-              onNewPlayer={(p) => update({ newPlayers: [...draft.newPlayers, p] })}
-              onPick={(id) => substitute(sub, id)}
+              onPick={(id, added) => substitute(sub, id, added)}
             />
             <button type="button" className="secondary" onClick={() => setSub(null)}>
               Cancel

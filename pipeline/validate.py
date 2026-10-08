@@ -161,7 +161,8 @@ def check_game(game: dict | None, game_id: str, rows: list[dict], data: RawData,
     last_pa = max(by_pa) if by_pa else None
     for pa, idx in by_pa.items():
         first, last = rows[idx[0]], rows[idx[-1]]
-        if any(rows[j]["batter_id"] != first["batter_id"] for j in idx):
+        # A pinch-hit sub row still shows the batter being replaced.
+        if len({rows[j]["batter_id"] for j in idx if rows[j]["event"] != "sub"}) > 1:
             report.error(f"{f}:{idx[0] + 2}: pa_id {pa} has more than one batter")
         for j in idx[:-1]:
             if rows[j]["pa_result"] is not None:

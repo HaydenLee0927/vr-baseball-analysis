@@ -50,9 +50,9 @@ Always record how the at-bat ended. This was the most common gap in the earlier 
 
 ## Between pitches
 
-Record these as events, not in the notes, so they can be counted: stolen base, caught stealing, wild pitch or passed ball, pickoff, substitution (pitcher, any fielder, pinch hitter). After any of them, check the runners and outs the tool shows.
+Record these as events, not in the notes, so they can be counted: stolen base, caught stealing, wild pitch or passed ball, balk, pickoff, substitution (pitcher, any fielder, pinch hitter). After any of them, check the runners and outs the tool shows.
 
-Keep the defense current: when a new player comes in, use the substitution; when players already in the game swap positions, change them in the Defense panel. Record the listed position, not where a player happens to stand on one pitch.
+Keep the defense current: when a new player comes in, use the substitution; when players already in the game swap positions (for example a fielder comes in to pitch and the pitcher moves to that fielder's spot), pick the player for their new position in the Pitcher, Catcher or Defense select; the two players trade places. Record the listed position, not where a player happens to stand on one pitch.
 
 ## Notes
 

@@ -164,6 +164,16 @@ class ValidateTest(unittest.TestCase):
         rows[9]["pa_result"] = None  # the strikeout
         self.assertTrue(any("has no pa_result" in e for e in self.errors(rows).errors))
 
+    def test_pinch_hitter_sub_row_keeps_the_replaced_batter(self):
+        rows = pitches()
+        sub = {**rows[0], "batter_id": "v-d", "velo": None, "zone": None, "result": None, "event": "sub"}
+        rows = [sub] + rows
+        for n, row in enumerate(rows, 1):
+            row["pitch_id"] = n
+        self.assertEqual(self.errors(rows).errors, [])
+        rows[2]["batter_id"] = "v-d"  # a pitch row with another batter is still an error
+        self.assertTrue(any("more than one batter" in e for e in self.errors(rows).errors))
+
     def test_in_play_fields_on_a_ball(self):
         rows = pitches()
         rows[0]["fielder_pos"] = 6
