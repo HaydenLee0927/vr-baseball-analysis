@@ -84,6 +84,8 @@ export interface GameSummary extends GameRef {
 
 export interface League {
   seasons: Record<string, { games: number; batting: Line; pitching: Line }>;
+  /** Pitch type code -> Korean name, from data/schema/pitch_types.csv. */
+  pitch_types: Record<string, string>;
 }
 
 export interface Meta {

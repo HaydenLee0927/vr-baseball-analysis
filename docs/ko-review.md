@@ -26,3 +26,4 @@ Terms Claude Code was unsure about while writing the scouting site's Korean text
 | Charts | 타자로 / 투수로 | view as hitter / as pitcher | |
 | Charts | 사용법, 표로 보기 | how to read, table view | |
 | View | 간단히 / 자세히 | simple / detailed | From the handoff; listed to confirm. |
+| Charts | 직구 계열 / 변화구, 구종 미상, 기타 | fastballs / other pitches, unknown pitch type, other (folded types) | 변화구 here covers splitters and changeups too. |

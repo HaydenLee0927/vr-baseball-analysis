@@ -25,7 +25,7 @@ from build_stats import (
     pitching_line,
     splits,
 )
-from rawdata import RAW_DIR, ROOT, RawData, display_name, load_raw
+from rawdata import RAW_DIR, ROOT, RawData, display_name, load_raw, pitch_types
 from romanize import romanize
 from validate import print_report, validate
 
@@ -210,7 +210,8 @@ def build_outputs(data: RawData) -> dict[str, object]:
                 "batting": batting_line(rows[rows.pa_result.notna()], rows[rows.result.notna()]),
                 "pitching": pitching_line(rows),
             }
-    files["league.json"] = {"seasons": league}
+    # Pitch type names come from data/schema/pitch_types.csv, so a new type needs no site change.
+    files["league.json"] = {"seasons": league, "pitch_types": {t["code"]: t["label_ko"] for t in pitch_types()}}
 
     games_per_team = defaultdict(int)
     for g in game_index:

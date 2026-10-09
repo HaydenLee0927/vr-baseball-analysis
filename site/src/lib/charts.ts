@@ -60,6 +60,99 @@ export function applyFilter(rows: PitchRec[], f: ChartFilter, role: 'batting' | 
   });
 }
 
+// ---- Velocity distribution (KDE per pitch type) ------------------------------------------------
+
+export const FASTBALLS = new Set(['FF', 'SI', 'FC', 'RF']);
+/** Fewer pitches than this: show each pitch as a dot instead of a curve. */
+export const KDE_MIN_N = 5;
+/** Colored series per chart; four hues are all that stay distinct pairwise in both themes. */
+export const VELO_COLORS = 4;
+/** Smallest bandwidth (km/h): the stream shows whole numbers, so narrower curves only draw noise. */
+const MIN_BW = 2;
+
+export type VeloMode = 'type' | 'group';
+/** Series key: a pitch type code, 'fastball' / 'offspeed' (group mode), 'etc' (folded types) or '' (unknown type). */
+export interface VeloSeries {
+  key: string;
+  codes: string[];
+  velos: number[];
+  /** Color slot 0-3, or null for the gray etc/unknown series. */
+  color: number | null;
+  /** Points [km/h, height 0-1] normalized to the curve's own peak; null below KDE_MIN_N pitches. */
+  curve: [number, number][] | null;
+}
+
+/** Silverman's rule of thumb with the robust spread (min of SD and IQR/1.34), floored at MIN_BW. */
+export function bandwidth(values: number[]): number {
+  const n = values.length;
+  if (n < 2) return MIN_BW;
+  const mean = values.reduce((a, b) => a + b, 0) / n;
+  const sd = Math.sqrt(values.reduce((a, v) => a + (v - mean) ** 2, 0) / (n - 1));
+  const s = [...values].sort((a, b) => a - b);
+  const q = (p: number) => {
+    const i = Math.floor(p * (n - 1));
+    return s[i] + (s[Math.min(i + 1, n - 1)] - s[i]) * (p * (n - 1) - i);
+  };
+  const spread = Math.min(sd, (q(0.75) - q(0.25)) / 1.34) || sd;
+  return Math.max(MIN_BW, 0.9 * spread * n ** -0.2);
+}
+
+/** Gaussian kernel density at each x, scaled so the highest point is 1. */
+export function kde(values: number[], xs: number[]): number[] {
+  const h = bandwidth(values);
+  const d = xs.map((x) => values.reduce((a, v) => a + Math.exp(-0.5 * ((x - v) / h) ** 2), 0));
+  const peak = Math.max(...d);
+  return d.map((v) => (peak > 0 ? v / peak : 0));
+}
+
+/** Axis range in km/h: the data plus some room, on 5 km/h marks. */
+export function veloDomain(values: number[]): [number, number] {
+  return [Math.floor((Math.min(...values) - 4) / 5) * 5, Math.ceil((Math.max(...values) + 4) / 5) * 5];
+}
+
+const groupOf = (type: string | null, mode: VeloMode) => (!type ? '' : mode === 'type' ? type : FASTBALLS.has(type) ? 'fastball' : 'offspeed');
+
+/**
+ * Series for the velocity chart. `rows` are the filtered pitches shown; `all` are the player's pitches
+ * before filters, which fix the colors so a filter never repaints a curve. The most-thrown keys get the
+ * colors; any beyond VELO_COLORS fold into one gray 'etc' series.
+ */
+export function veloSeries(rows: PitchRec[], all: PitchRec[], mode: VeloMode): VeloSeries[] {
+  const usage = new Map<string, number>();
+  for (const r of all) {
+    const k = groupOf(r.pitch_type, mode);
+    if (k && r.velo !== null) usage.set(k, (usage.get(k) ?? 0) + 1);
+  }
+  const ranked = [...usage.keys()].sort((a, b) => usage.get(b)! - usage.get(a)! || a.localeCompare(b));
+  const slot = new Map(ranked.slice(0, VELO_COLORS).map((k, i) => [k, i]));
+
+  const groups = new Map<string, { codes: Set<string>; velos: number[] }>();
+  for (const r of rows) {
+    if (r.velo === null) continue;
+    const g = groupOf(r.pitch_type, mode);
+    const key = g && !slot.has(g) ? 'etc' : g;
+    if (!groups.has(key)) groups.set(key, { codes: new Set(), velos: [] });
+    groups.get(key)!.velos.push(r.velo);
+    if (r.pitch_type) groups.get(key)!.codes.add(r.pitch_type);
+  }
+  const timed = rows.filter((r) => r.velo !== null).map((r) => r.velo!);
+  const [lo, hi] = timed.length ? veloDomain(timed) : [0, 0];
+  const xs = Array.from({ length: (hi - lo) * 2 + 1 }, (_, i) => lo + i / 2);
+  const order = (k: string) => (slot.has(k) ? slot.get(k)! : k === 'etc' ? VELO_COLORS : VELO_COLORS + 1);
+  return [...groups.entries()]
+    .sort(([a], [b]) => order(a) - order(b))
+    .map(([key, g]) => {
+      const curve = g.velos.length >= KDE_MIN_N ? kde(g.velos, xs) : null;
+      return {
+        key,
+        codes: [...g.codes].sort(),
+        velos: g.velos,
+        color: slot.get(key) ?? null,
+        curve: curve && xs.map((x, i) => [x, curve[i]] as [number, number]),
+      };
+    });
+}
+
 // ---- Zone grid (catcher's view) --------------------------------------------------------------
 
 /** Cell geometry on a 5x5 grid: zones 1-9 are the inner 3x3, 11-14 the L-shaped outer quadrants. */

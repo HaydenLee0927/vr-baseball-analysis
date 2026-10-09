@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { applyFilter, divColor, NO_FILTER, resultClass, zoneShapes, zoneValue, type PitchRec } from '../lib/charts';
+import { applyFilter, bandwidth, divColor, kde, NO_FILTER, resultClass, veloSeries, zoneShapes, zoneValue, type PitchRec } from '../lib/charts';
 
 const p = (over: Partial<PitchRec>): PitchRec => ({
   game_id: 'g', pitch_id: 1, inning: 1, balls: 0, strikes: 0, velo: 110, pitch_type: null, zone: 5, result: 'ball',
@@ -8,6 +8,32 @@ const p = (over: Partial<PitchRec>): PitchRec => ({
 });
 
 describe('chart helpers', () => {
+  it('velocity curves: peak at 1 near the data, bandwidth never below 2 km/h', () => {
+    expect(bandwidth([110, 110, 110])).toBe(2);
+    expect(bandwidth([90, 100, 110, 120, 130])).toBeGreaterThan(2);
+    const d = kde([100, 100, 101, 99, 100], [90, 100, 110]);
+    expect(d[1]).toBe(1);
+    expect(d[0]).toBeLessThan(0.01);
+  });
+
+  it('velocity series: curves from 5 pitches, dots below, colors fixed by unfiltered usage', () => {
+    const all = [
+      ...Array.from({ length: 6 }, (_, i) => p({ pitch_type: 'FF', velo: 110 + i })),
+      ...Array.from({ length: 5 }, (_, i) => p({ pitch_type: 'SL', velo: 95 + i })),
+      p({ pitch_type: 'SI', velo: 100 }), p({ pitch_type: 'SP', velo: 92 }), p({ pitch_type: 'CU', velo: 85 }),
+      p({ pitch_type: 'RF', velo: 105 }), p({ pitch_type: null, velo: 101 }), p({ pitch_type: 'FF', velo: null }),
+    ];
+    const s = veloSeries(all, all, 'type');
+    expect(s.map((x) => [x.key, x.velos.length, x.color, x.curve !== null])).toEqual([
+      ['FF', 6, 0, true], ['SL', 5, 1, true], ['CU', 1, 2, false], ['RF', 1, 3, false], ['etc', 2, null, false], ['', 1, null, false],
+    ]);
+    expect(s.find((x) => x.key === 'etc')!.codes).toEqual(['SI', 'SP']);
+    // Filtering out the fastballs keeps the slider's color.
+    expect(veloSeries(all.filter((r) => r.pitch_type !== 'FF'), all, 'type')[0]).toMatchObject({ key: 'SL', color: 1 });
+    const g = veloSeries(all, all, 'group');
+    expect(g.map((x) => [x.key, x.velos.length, x.color])).toEqual([['fastball', 8, 0], ['offspeed', 7, 1], ['', 1, null]]);
+  });
+
   it('classes balls in play', () => {
     expect([resultClass('HR'), resultClass('DP'), resultClass('E'), resultClass(null)]).toEqual(['hit', 'out', 'other', 'other']);
   });

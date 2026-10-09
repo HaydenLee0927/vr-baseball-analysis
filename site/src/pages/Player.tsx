@@ -159,7 +159,7 @@ export function Player() {
               <PercentileBars data={current.percentiles?.[role] ?? null} role={role} season={current.season} />
               <SprayChart rows={rows} />
               {view === 'detailed' && <ZoneChart rows={rows} />}
-              {view === 'detailed' && <VeloChart rows={rows} role={role} />}
+              {view === 'detailed' && <VeloChart rows={rows} all={inSeason[role]} role={role} />}
             </div>
           </>
         )}

@@ -16,6 +16,12 @@
   --viz-grid: #e1e0d9;
   --viz-tick: #898781;
   --viz-bar: #2a78d6;
+  /* Velocity curves: the four hues that stay distinct pairwise (validated --pairs all, both themes). */
+  --viz-s0: #2a78d6;
+  --viz-s1: #eda100;
+  --viz-s2: #e87ba4;
+  --viz-s3: #008300;
+  --viz-s-none: #898781;
   color-scheme: light;
 }
 
@@ -37,6 +43,11 @@
     --viz-grid: #2c2c34;
     --viz-tick: #898781;
     --viz-bar: #3987e5;
+    --viz-s0: #3987e5;
+    --viz-s1: #c98500;
+    --viz-s2: #d55181;
+    --viz-s3: #008300;
+    --viz-s-none: #898781;
     color-scheme: dark;
   }
 }
@@ -926,4 +937,30 @@ ul.pctl li {
   border-radius: 8px;
   background: var(--surface);
   font-size: 0.9rem;
+}
+
+.viz-curve-fill {
+  fill-opacity: 0.12;
+}
+
+.viz-curve {
+  fill: none;
+  stroke-width: 2;
+  stroke-linejoin: round;
+}
+
+.viz-curve.unknown {
+  stroke-dasharray: 4 3;
+}
+
+.viz-curve-hit {
+  fill: none;
+  stroke: transparent;
+  stroke-width: 14;
+  cursor: pointer;
+}
+
+.viz-pitch {
+  stroke: var(--surface);
+  stroke-width: 2;
 }

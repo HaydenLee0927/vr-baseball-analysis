@@ -33,9 +33,14 @@ def columns(table: str) -> list[str]:
     return list(load_schema(table)["properties"])
 
 
-def pitch_type_codes() -> set[str]:
+def pitch_types() -> list[dict]:
+    """Rows of data/schema/pitch_types.csv: code, label_ko, label_en."""
     with open(SCHEMA_DIR / "pitch_types.csv", encoding="utf-8-sig", newline="") as f:
-        return {row["code"] for row in csv.DictReader(f)}
+        return list(csv.DictReader(f))
+
+
+def pitch_type_codes() -> set[str]:
+    return {row["code"] for row in pitch_types()}
 
 
 def _types(spec: dict) -> list[str]:
