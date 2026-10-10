@@ -30,6 +30,9 @@ from romanize import romanize
 from validate import print_report, validate
 
 DEFAULT_OUT = ROOT / "site" / "public" / "data"
+# Player pages anyone can see without the password (plain JSON, outside the encrypted data folder).
+SAMPLE_PLAYERS = ["mir-mireu", "greatmoonaroma"]
+SAMPLE_OUT = ROOT / "site" / "public" / "sample"
 # Fields copied into players.json for search and leaderboards (rates travel with their denominators).
 BATTING_SUMMARY = [
     "pa", "ab", "h", "hr", "bb", "k", "avg", "obp", "slg", "ops", "k_pct", "bb_pct",
@@ -144,6 +147,7 @@ def build_outputs(data: RawData) -> dict[str, object]:
             as_pitcher = pitch_rows[(pitch_rows.pitcher_id == pid) & pitch_rows.detailed]
         files[f"player/{players[pid]['slug']}.json"] = {
             "player": person(pid),
+            "swot": data.swot.get(pid),  # coach's notes; None for players without a swot/{player_id}.md
             "seasons": seasons,
             "game_log": {"batting": bat_log, "pitching": pit_log},
             "pitches": {
@@ -232,6 +236,21 @@ def build_outputs(data: RawData) -> dict[str, object]:
     return {name: clean(payload) for name, payload in files.items()}
 
 
+def sample_files(files: dict[str, object], slugs: list[str] = SAMPLE_PLAYERS) -> dict[str, object]:
+    """Public files for the example pages: those players' files plus the summaries the page needs.
+    Team rosters are dropped, so no other player's data goes out unencrypted."""
+    keys = [f"player/{slug}.json" for slug in slugs if f"player/{slug}.json" in files]
+    if not keys:
+        return {}
+    return {
+        **{key: files[key] for key in keys},
+        "games.json": files["games.json"],
+        "league.json": files["league.json"],
+        "teams.json": [{k: v for k, v in t.items() if k != "rosters"} for t in files["teams.json"]],
+        "sample.json": {"players": [{"slug": files[key]["player"]["slug"], "name": files[key]["player"]["name"]} for key in keys]},
+    }
+
+
 def write_json(out_dir: Path, files: dict[str, object]) -> None:
     out_dir.mkdir(parents=True, exist_ok=True)
     for old in [*out_dir.rglob("*.json"), *out_dir.rglob("*.json.enc")]:  # drop files for renamed players/games
@@ -247,13 +266,19 @@ def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--raw", type=Path, default=RAW_DIR)
     parser.add_argument("--out", type=Path, default=DEFAULT_OUT)
+    parser.add_argument("--sample-out", type=Path, default=SAMPLE_OUT)
     args = parser.parse_args()
     data = load_raw(args.raw)
     report = validate(data)
     print_report(report)
     if report.errors:
         raise SystemExit("validation failed; no JSON written")
-    write_json(args.out, build_outputs(data))
+    files = build_outputs(data)
+    write_json(args.out, files)
+    for slug in SAMPLE_PLAYERS:
+        if f"player/{slug}.json" not in files:
+            print(f"warning: example player {slug!r} is not in this data; no public page for them")
+    write_json(args.sample_out, sample_files(files))
 
 
 if __name__ == "__main__":

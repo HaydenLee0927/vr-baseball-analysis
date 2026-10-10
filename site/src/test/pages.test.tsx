@@ -5,6 +5,7 @@ import { cleanup, fireEvent, render, screen, within } from '@testing-library/rea
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import fixture from './fixture.json';
+import { ko } from '../i18n/ko';
 import { SearchBox } from '../components/SearchBox';
 import { Glossary } from '../pages/Glossary';
 import { Home } from '../pages/Home';
@@ -101,6 +102,23 @@ describe('pages', () => {
     await screen.findByRole('heading', { name: 'VR_v-a' });
     expect(screen.getByText(/착지 위치가 기록된 타구가 없어/)).toBeTruthy();
     expect(screen.getByRole('button', { name: '점' }).hasAttribute('disabled')).toBe(true);
+  });
+
+  it('player page shows the SWOT only for players who have one', async () => {
+    const file = fixture['player/h-p.json'] as { swot: unknown };
+    file.swot = { strengths: ['빠른 구속'], weaknesses: [], opportunities: ['변화구 장착'], threats: [] };
+    try {
+      at('/player/h-p');
+      expect(await screen.findByRole('heading', { name: ko.swot.title })).toBeTruthy();
+      expect(screen.getByText('빠른 구속')).toBeTruthy();
+      expect(screen.getByText('변화구 장착')).toBeTruthy();
+    } finally {
+      file.swot = null;
+    }
+    cleanup();
+    at('/player/h-a');
+    await screen.findByRole('heading', { name: 'VR_h-a' });
+    expect(screen.queryByRole('heading', { name: ko.swot.title })).toBeNull();
   });
 
   it('a player without detailed games opens on the tables', async () => {

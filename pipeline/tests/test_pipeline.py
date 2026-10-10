@@ -120,6 +120,14 @@ class StatsTest(unittest.TestCase):
         self.assertEqual(self.out["meta.json"]["coverage"]["plate_appearances"], 7)
         self.assertEqual(self.out["games.json"][0]["innings"], 1)
 
+    def test_sample_files_hold_only_the_listed_players_and_no_rosters(self):
+        from export_json import sample_files
+        sample = sample_files(self.out, ["v-a", "h-p", "nobody"])
+        self.assertEqual(sorted(sample), ["games.json", "league.json", "player/h-p.json", "player/v-a.json", "sample.json", "teams.json"])
+        self.assertEqual([p["slug"] for p in sample["sample.json"]["players"]], ["v-a", "h-p"])
+        self.assertTrue(all("rosters" not in t for t in sample["teams.json"]))
+        self.assertEqual(sample_files(self.out, ["nobody"]), {})
+
 
 class PercentileTest(unittest.TestCase):
     def lines(self, values):
@@ -183,6 +191,31 @@ class ValidateTest(unittest.TestCase):
         report = self.errors(home_final=5)
         self.assertEqual(report.errors, [])
         self.assertTrue(any("does not match the final score" in w for w in report.warnings))
+
+
+class SwotTest(unittest.TestCase):
+    def load(self, files):
+        with tempfile.TemporaryDirectory() as tmp:
+            raw = Path(tmp)
+            write_fixture(raw)
+            (raw / "swot").mkdir()
+            for name, text in files.items():
+                (raw / "swot" / name).write_text(text, encoding="utf-8")
+            return load_raw(raw)
+
+    def test_sections_reach_the_player_file(self):
+        data = self.load({"h-p.md": "## 장점\n- 빠른 구속\n제구\n\n## 위험\n도루 저지\n"})
+        self.assertEqual(validate(data).errors, [])
+        out = build_outputs(data)
+        self.assertEqual(out["player/h-p.json"]["swot"], {"strengths": ["빠른 구속", "제구"], "weaknesses": [], "opportunities": [], "threats": ["도루 저지"]})
+        self.assertIsNone(out["player/h-a.json"]["swot"])
+
+    def test_problems_name_the_line_but_never_the_note(self):
+        errors = validate(self.load({"nobody.md": "## 장점\nx\n", "h-p.md": "비밀 메모\n## 강점\n"})).errors
+        self.assertTrue(any("swot/nobody.md" in e and "player_id" in e for e in errors))
+        self.assertTrue(any(e.startswith("swot/h-p.md:1:") for e in errors))
+        self.assertTrue(any(e.startswith("swot/h-p.md:2:") for e in errors))
+        self.assertFalse(any("비밀" in e or "강점" in e for e in errors))
 
 
 class ImportLegacyTest(unittest.TestCase):

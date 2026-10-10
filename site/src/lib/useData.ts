@@ -13,6 +13,11 @@ export function fetchCached<T>(path: string): Promise<T> {
   return cache.get(path) as Promise<T>;
 }
 
+/** Forget loaded files, e.g. after unlocking, when the example files give way to the full data. */
+export function clearDataCache(): void {
+  cache.clear();
+}
+
 export function useData<T>(path: string | null): { data: T | null; error: boolean } {
   const [state, setState] = useState<{ path: string | null; data: T | null; error: boolean }>({ path: null, data: null, error: false });
   useEffect(() => {

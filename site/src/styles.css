@@ -939,6 +939,25 @@ ul.pctl li {
   font-size: 0.9rem;
 }
 
+/* 풀버전 buttons: in the header and on pages only the full version has. */
+.topbar > button:not(.link),
+.page > button {
+  padding: 0 1rem;
+}
+
+.sample-banner {
+  width: calc(100% - 2rem);
+  max-width: calc(1200px - 2rem);
+  margin: 0.75rem auto 0;
+}
+
+.sample-banner button.link {
+  min-height: 0;
+  padding: 0 0.25rem;
+  color: var(--accent);
+  font-weight: 600;
+}
+
 .viz-curve-fill {
   fill-opacity: 0.12;
 }
@@ -963,4 +982,33 @@ ul.pctl li {
 .viz-pitch {
   stroke: var(--surface);
   stroke-width: 2;
+}
+
+.swot {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 260px), 1fr));
+  gap: 0.75rem;
+}
+
+.swot-box {
+  padding: 0.75rem 1rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-top: 3px solid var(--border);
+  border-radius: 8px;
+}
+
+.swot-box h3 {
+  margin: 0 0 0.4rem;
+  color: var(--text);
+}
+
+.swot-box ul {
+  margin: 0;
+  padding-left: 1.1rem;
+  line-height: 1.5;
+}
+
+.swot-box p {
+  margin: 0;
 }

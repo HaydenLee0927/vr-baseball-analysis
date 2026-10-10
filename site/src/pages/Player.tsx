@@ -3,6 +3,7 @@ import { useParams, useSearchParams } from 'react-router-dom';
 import { PercentileBars } from '../components/charts/PercentileBars';
 import { SprayChart } from '../components/charts/SprayChart';
 import { VeloChart } from '../components/charts/VeloChart';
+import { SwotCard } from '../components/SwotCard';
 import { ZoneChart } from '../components/charts/ZoneChart';
 import { StatTable } from '../components/StatTable';
 import { ko } from '../i18n/ko';
@@ -130,6 +131,8 @@ export function Player() {
           </div>
         </div>
       </header>
+
+      {file.data.swot && <SwotCard swot={file.data.swot} />}
 
       <section>
         <h2>

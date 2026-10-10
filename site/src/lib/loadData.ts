@@ -1,9 +1,11 @@
 // Single entry point for site data. In encrypted mode it fetches `<path>.enc`
 // and decrypts with the key derived from the password (see pipeline/encrypt.py);
 // in public mode it fetches plain JSON. Page code never needs to know which.
+// While locked it serves the plain example files in `sample/` (one player's page, see export_json.py).
 
 const PUBLIC_MODE = import.meta.env.VITE_PUBLIC_MODE === 'true';
 const DATA_URL = `${import.meta.env.BASE_URL}data/`;
+const SAMPLE_URL = `${import.meta.env.BASE_URL}sample/`;
 const STORAGE_KEY = 'vr-savant-key';
 
 let key: CryptoKey | null = null;
@@ -18,8 +20,8 @@ function fromBase64(text: string): Uint8Array<ArrayBuffer> {
   return Uint8Array.from(atob(text), (c) => c.charCodeAt(0));
 }
 
-async function fetchOk(path: string): Promise<Response> {
-  const res = await fetch(DATA_URL + path);
+async function fetchOk(path: string, base = DATA_URL): Promise<Response> {
+  const res = await fetch(base + path);
   if (!res.ok) throw new Error(`${path}: HTTP ${res.status}`);
   return res;
 }
@@ -105,8 +107,13 @@ export async function unlock(password: string, remember: boolean): Promise<boole
   return true;
 }
 
+/** True once the password has been entered (or the whole site is public). */
+export function isUnlocked(): boolean {
+  return PUBLIC_MODE || key !== null;
+}
+
 export async function loadData<T>(path: string): Promise<T> {
   if (PUBLIC_MODE) return (await fetchOk(path)).json() as Promise<T>;
-  if (!key) throw new Error('locked');
+  if (!key) return (await fetchOk(path, SAMPLE_URL)).json() as Promise<T>;
   return decryptFile(key, path) as Promise<T>;
 }

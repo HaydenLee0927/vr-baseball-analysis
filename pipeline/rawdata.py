@@ -143,6 +143,8 @@ class RawData:
     games: list[dict] = field(default_factory=list)
     pitches: dict[str, list[dict]] = field(default_factory=dict)  # game_id -> rows
     headers: dict[str, list[str]] = field(default_factory=dict)  # file name -> header as read
+    swot: dict[str, dict[str, list[str]]] = field(default_factory=dict)  # player_id -> section -> points
+    swot_problems: list[str] = field(default_factory=list)  # file and line only: never the note text (CI logs are public)
 
 
 def load_raw(raw_dir: Path = RAW_DIR) -> RawData:
@@ -163,7 +165,33 @@ def load_raw(raw_dir: Path = RAW_DIR) -> RawData:
         header, rows = read_table(path, "pitches")
         data.headers[f"pitches/{path.name}"] = header
         data.pitches[path.stem] = rows
+    for path in sorted((raw_dir / "swot").glob("*.md")):
+        data.swot[path.stem], problems = read_swot(path)
+        data.swot_problems += [f"swot/{path.name}:{p}" for p in problems]
     return data
+
+
+SWOT_SECTIONS = {"장점": "strengths", "단점": "weaknesses", "기회": "opportunities", "위험": "threats"}
+
+
+def read_swot(path: Path) -> tuple[dict[str, list[str]], list[str]]:
+    """swot/{player_id}.md: headings `## 장점`, `## 단점`, `## 기회`, `## 위험`, then one point per line
+    (a leading `- ` is optional). Sections may be left out. Problems name the line number only."""
+    swot = {key: [] for key in SWOT_SECTIONS.values()}
+    problems, section = [], None
+    for n, line in enumerate(path.read_text(encoding="utf-8-sig").splitlines(), 1):
+        text = line.strip()
+        if not text:
+            continue
+        if text.startswith("#"):
+            section = SWOT_SECTIONS.get(text.lstrip("#").strip())
+            if section is None:
+                problems.append(f"{n}: heading must be one of {', '.join(SWOT_SECTIONS)}")
+        elif section is None:
+            problems.append(f"{n}: text before the first heading")
+        else:
+            swot[section].append(text.removeprefix("- ").strip())
+    return swot, problems
 
 
 def name_index(players: list[dict], aliases: list[dict]) -> dict[str, str]:

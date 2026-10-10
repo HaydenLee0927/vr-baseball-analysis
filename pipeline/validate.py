@@ -190,6 +190,12 @@ def validate(data: RawData) -> Report:
     codes = pitch_type_codes()
     for game_id, rows in data.pitches.items():
         check_game(games.get(game_id), game_id, rows, data, codes, report)
+    player_ids = {p["player_id"] for p in data.players}
+    for pid in data.swot:
+        if pid not in player_ids:
+            report.error(f"swot/{pid}.md: file name must be a player_id in players.csv")
+    for problem in data.swot_problems:
+        report.error(problem)
     return report
 
 

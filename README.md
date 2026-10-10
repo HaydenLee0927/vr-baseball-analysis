@@ -73,5 +73,7 @@ To make the site public later, set `PUBLIC_MODE: 'true'` in `.github/workflows/d
 
 The data files are encrypted (PBKDF2-SHA256, 600k iterations → AES-256-GCM); the page itself is public but contains no data.
 
+- **Example pages are public.** Without the password the site shows the pages of the players listed in `SAMPLE_PLAYERS` (`pipeline/export_json.py`), from plain JSON in `sample/`: those players' full files, the game list, league averages and team names. Add or remove players there; the 풀버전 button opens the password form.
+
 - **It is one shared password.** Anyone who has it can read everything and pass it on. To revoke access, change the `SITE_PASSWORD` secret and redeploy; saved logins stop working automatically.
 - **Strength depends on the password.** The encrypted files are downloadable, so a short password can be guessed offline. Use a passphrase of 4 or more random words.

@@ -11,6 +11,11 @@ export const ko = {
     checking: '확인 중…',
     wrongPassword: '비밀번호가 틀렸습니다.',
     loadError: '데이터를 불러오지 못했습니다. 잠시 후 다시 시도하세요.',
+    cancel: '취소',
+    fullVersion: '풀버전',
+    sampleBanner: '예시 페이지입니다. 다른 선수, 리더보드, 검색은 풀버전에서 볼 수 있습니다.',
+    samplePlayers: '예시 선수:',
+    fullOnly: '풀버전에서만 볼 수 있는 페이지입니다. 비밀번호를 입력하면 모든 기록을 볼 수 있습니다.',
   },
   common: {
     loading: '불러오는 중…',
@@ -190,6 +195,13 @@ export const ko = {
     kmh: 'km/h',
     swings: (n: number) => `스윙 ${n}`,
     none: '표시할 기록이 없습니다.',
+  },
+  swot: {
+    title: 'SWOT 분석',
+    strengths: '장점',
+    weaknesses: '단점',
+    opportunities: '기회',
+    threats: '위험',
   },
   glossaryPage: {
     title: '용어 설명',

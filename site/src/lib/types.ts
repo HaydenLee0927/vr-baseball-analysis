@@ -56,8 +56,17 @@ export interface GameLogRow extends GameRef {
   [stat: string]: number | string | null | string[];
 }
 
+/** Coach's notes from data/raw/swot/{player_id}.md; each section is a list of points. */
+export interface Swot {
+  strengths: string[];
+  weaknesses: string[];
+  opportunities: string[];
+  threats: string[];
+}
+
 export interface PlayerFile {
   player: Person;
+  swot: Swot | null;
   seasons: SeasonLine[];
   game_log: { batting: GameLogRow[]; pitching: GameLogRow[] };
   /** Pitch-level rows from detailed games only, for the charts. */
