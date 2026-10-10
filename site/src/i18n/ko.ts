@@ -197,7 +197,7 @@ export const ko = {
     none: '표시할 기록이 없습니다.',
   },
   swot: {
-    title: 'SWOT 분석',
+    title: '주인장의 지극히 주관적인 SWOT 분석',
     strengths: '장점',
     weaknesses: '단점',
     opportunities: '기회',

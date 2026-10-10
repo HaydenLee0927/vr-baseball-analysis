@@ -132,8 +132,6 @@ export function Player() {
         </div>
       </header>
 
-      {file.data.swot && <SwotCard swot={file.data.swot} />}
-
       <section>
         <h2>
           {ko.charts.section} <span className="muted small">{current.season}</span>
@@ -218,6 +216,8 @@ export function Player() {
           </section>
         </>
       )}
+
+      {file.data.swot && <SwotCard swot={file.data.swot} />}
     </main>
   );
 }
