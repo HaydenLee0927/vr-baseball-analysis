@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   advance,
   checkGame,
+  endHalf,
   inferLineups,
   initialState,
   makeRow,
@@ -140,6 +141,15 @@ describe('half-innings', () => {
     const top = play([...groundout(), ...groundout(), ...groundout()], l2, swap.state).state;
     const back = play([...groundout(), ...groundout(), ...groundout()], l2, top).state;
     expect([back.half, back.pitcherId, back.fielders[6]]).toEqual(['top', 'h2', 'hp']);
+  });
+
+  it('ending a half-inning by hand brings in the other defense and the next batter', () => {
+    // Two outs, then a single where the batter is thrown out stretching it: the defaults leave 2 outs.
+    const { state, rows } = play([...groundout(), ...groundout(), pitch('in_play', '1B')]);
+    expect([state.outs, state.runners[0]]).toEqual([2, 'a3']);
+    const s = endHalf(state, rows.some((r) => r.pa_id === state.paId), lineups(), {}, {});
+    expect([s.inning, s.half, s.outs, s.runners, s.paId]).toEqual([1, 'bot', 0, [null, null, null], 4]);
+    expect([s.batterId, s.pitcherId, s.catcherId, s.fielders[3]]).toEqual(['h1', 'ap', 'ac', 'a1']);
   });
 
   it('every row records the defense, which changes with the half-inning', () => {

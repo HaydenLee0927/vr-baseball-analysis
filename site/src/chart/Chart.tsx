@@ -4,6 +4,7 @@ import {
   advance,
   battingSide,
   checkGame,
+  endHalf,
   FIELD_POSITIONS,
   fieldersOf,
   fieldingSide,
@@ -360,6 +361,14 @@ export function Chart(props: {
           {counter('Balls', state.balls, 3, (n) => setState({ balls: n }))}
           {counter('Strikes', state.strikes, 2, (n) => setState({ strikes: n }))}
           {counter('Outs', state.outs, 2, (n) => setState({ outs: n }))}
+          <button
+            type="button"
+            className="secondary"
+            title="For a third out the tool did not count, e.g. a batter thrown out stretching a hit: clears count, outs and bases and brings in the other team's defense and next batter."
+            onClick={() => update({ state: endHalf(state, draft.rows.some((r) => r.pa_id === state.paId), lineups, draft.memory, defaults) })}
+          >
+            End half-inning
+          </button>
           <div className="kv">
             <span>Batter</span>
             <span className="row">
@@ -539,7 +548,8 @@ export function Chart(props: {
       {editing && (
         <RowEditor
           row={editing}
-          schema={data.pitchSchema}
+          // pitch_type's allowed codes live in pitch_types.csv, not the schema; offer them as a list so nothing else can be typed.
+          schema={{ ...data.pitchSchema, pitch_type: { ...data.pitchSchema.pitch_type, enum: [null, ...data.pitchTypes.map((p) => p.code)] } }}
           people={people}
           onCancel={() => setEditing(null)}
           onSave={(row) => {

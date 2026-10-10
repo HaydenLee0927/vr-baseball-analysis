@@ -364,6 +364,35 @@ export function playOutcome(row: PitchRow): { runners: Bases; outs: number; runs
   return { runners: bases, outs: Math.min(outs, 3), runs };
 }
 
+/**
+ * Start the next half-inning by hand, as a third out would: for an out the defaults miss,
+ * such as a batter thrown out stretching a hit. `paStarted`: the current at-bat already has rows,
+ * so it ends here and the batter leads off next time.
+ */
+export function endHalf(s: State, paStarted: boolean, lineups: Lineups, memory: HandMemory, defaults: HandDefaults): State {
+  const half: Half = s.half === 'top' ? 'bot' : 'top';
+  const bat = battingSide(half);
+  const fld = fieldingSide(half);
+  const batterId = batterAt(lineups, bat, s.next[bat]);
+  const pitcherId = lineups[fld].pitcher;
+  return {
+    ...s,
+    inning: s.half === 'bot' ? s.inning + 1 : s.inning,
+    half,
+    balls: 0,
+    strikes: 0,
+    outs: 0,
+    runners: [null, null, null],
+    paId: paStarted ? s.paId + 1 : s.paId,
+    batterId,
+    pitcherId,
+    catcherId: lineups[fld].catcher,
+    fielders: { ...lineups[fld].fielders },
+    pitcherHand: hand(pitcherId, 'throws', memory, defaults),
+    batterSide: hand(batterId, 'bats', memory, defaults),
+  };
+}
+
 /** State before the next entry, given the state the row was entered in. */
 export function advance(prev: State, row: PitchRow, lineups: Lineups, memory: HandMemory, defaults: HandDefaults): State {
   const bat = battingSide(row.half);
